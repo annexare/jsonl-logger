@@ -9,12 +9,19 @@ export type ErrorInfo = {
   cause?: ErrorInfo
 }
 
+export type TraceContext = {
+  traceId: string
+  spanId: string
+  traceFlags?: number
+}
+
 export type LogRecord = {
   level: LogLevel
   message: string
   timestamp: string
   context: LogContext
   error?: ErrorInfo
+  trace?: TraceContext
 }
 
 export type Formatter = {
@@ -26,6 +33,7 @@ export type LoggerOptions = {
   formatter?: Formatter
   json?: boolean
   level?: LogLevel
+  traceContext?: () => TraceContext | undefined
 }
 
 export type FormatterName = 'google-cloud-logging' | 'victoria-logs'
@@ -37,6 +45,7 @@ export type InterceptOptions = {
   formatter?: Formatter
   filter?: (level: LogLevel, message: string) => boolean
   level?: LogLevel
+  traceContext?: () => TraceContext | undefined
 }
 
 export const logLevelValues: Record<LogLevel, number> = {

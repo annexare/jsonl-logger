@@ -35,6 +35,7 @@ tests/
 - **Intercept passthrough** — JSON strings that already contain the formatter's `messageKey` are written as-is, preventing double-formatting when `Logger` output goes through intercepted console.
 - **TitleCase exports** for formatters (`GoogleCloudLogging`, `VictoriaLogs`) — they are objects conforming to the `Formatter` type.
 - **Error cause chains** — `errorInfo()` recursively extracts `Error.cause` into `ErrorInfo.cause`. Both `Logger.log()` and `intercept()` use it. In dev mode, causes are shown as `Caused by: ...` below the main stack. In JSON mode, they appear as `error.cause.name/message/stack` fields.
+- **Trace context injection** — optional `traceContext` getter on `LoggerOptions` / `InterceptOptions` returns `{ traceId, spanId, traceFlags? }`. Called per log call; formatters map to platform-specific fields (GCL: `logging.googleapis.com/*`, VictoriaLogs: `trace_id`/`span_id`). No new modules or dependencies — users wire their own OTel getter.
 
 ## Conventions
 

@@ -1,6 +1,11 @@
 import { GoogleCloudLogging } from './google-cloud-logging'
 import { errorInfo } from './index'
-import type { Formatter, InterceptOptions, LogLevel } from './types'
+import type {
+  Formatter,
+  InterceptOptions,
+  LogLevel,
+  TraceContext,
+} from './types'
 import { flattenError, logLevelValues, stripAnsi, write } from './types'
 
 type ConsoleMethods = {
@@ -75,6 +80,7 @@ function createOverride(
   formatter: Formatter,
   minLevel: number,
   filter?: (level: LogLevel, message: string) => boolean,
+  traceContext?: () => TraceContext | undefined,
 ): (...args: unknown[]) => void {
   const msgKey = `"${formatter.messageKey}"`
 
@@ -105,6 +111,7 @@ function createOverride(
       timestamp: new Date().toISOString(),
       context: meta || {},
       error: error ? errorInfo(error) : undefined,
+      trace: traceContext?.(),
     }
 
     const formatted = formatter.format(record)
@@ -122,6 +129,7 @@ export function intercept(options?: InterceptOptions): void {
   const formatter = options?.formatter ?? GoogleCloudLogging
   const minLevel = logLevelValues[options?.level ?? 'debug']
   const filter = options?.filter
+  const traceContext = options?.traceContext
 
   const methodMap: [keyof ConsoleMethods, LogLevel][] = [
     ['log', 'info'],
@@ -132,6 +140,12 @@ export function intercept(options?: InterceptOptions): void {
   ]
 
   for (const [method, level] of methodMap) {
-    console[method] = createOverride(level, formatter, minLevel, filter)
+    console[method] = createOverride(
+      level,
+      formatter,
+      minLevel,
+      filter,
+      traceContext,
+    )
   }
 }
