@@ -4,7 +4,10 @@
   "description": "Lightweight ESM-only JSON Lines logger with pluggable formatters for Google Cloud Logging, VictoriaLogs, and more",
   "license": "MIT",
   "type": "module",
-  "sideEffects": ["./src/preload.ts", "./dist/preload.js"],
+  "sideEffects": [
+    "./src/preload.ts",
+    "./dist/preload.js"
+  ],
   "exports": {
     ".": {
       "bun": "./src/index.ts",
@@ -32,7 +35,10 @@
       "types": "./dist/preload.d.ts"
     }
   },
-  "files": ["dist", "src"],
+  "files": [
+    "dist",
+    "src"
+  ],
   "scripts": {
     "build": "bun run build:js && bun run build:types",
     "build:js": "bun build src/index.ts src/google-cloud.ts src/victoria-logs.ts src/intercept.ts src/preload.ts --outdir dist --target node --format esm --splitting --minify",
@@ -41,7 +47,7 @@
     "test": "bun test"
   },
   "devDependencies": {
-    "@biomejs/biome": "1.9.4",
+    "@biomejs/biome": "2.4.2",
     "@types/bun": "1.3.9",
     "typescript": "5.9.3"
   },

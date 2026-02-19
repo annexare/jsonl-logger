@@ -1,15 +1,21 @@
 import type {
   Formatter,
   LogContext,
+  LoggerOptions,
   LogLevel,
   LogRecord,
-  LoggerOptions,
 } from './types'
 import { logLevelValues, stripAnsi, write } from './types'
 import { victoriaLogs } from './victoria-logs'
 
-export type { Formatter, LogContext, LogLevel, LogRecord } from './types'
-export type { InterceptOptions, LoggerOptions } from './types'
+export type {
+  Formatter,
+  InterceptOptions,
+  LogContext,
+  LoggerOptions,
+  LogLevel,
+  LogRecord,
+} from './types'
 export { logLevelValues, stripAnsi } from './types'
 
 const defaultJson = process.env.JSON_LOGS === 'true'

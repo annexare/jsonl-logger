@@ -1,9 +1,31 @@
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
 
-import type { LogLevel } from '../src/types'
+import type { Formatter, LogLevel, LogRecord } from '../src/types'
+
+function createSpyFormatter(): Formatter & { records: LogRecord[] } {
+  const records: LogRecord[] = []
+  return {
+    messageKey: '_msg',
+    records,
+    format(record: LogRecord) {
+      records.push(record)
+      return {
+        _msg: record.message,
+        _time: record.timestamp,
+        level: record.level,
+        ...record.context,
+        ...(record.error
+          ? {
+              'error.name': record.error.name,
+              'error.message': record.error.message,
+            }
+          : {}),
+      }
+    },
+  }
+}
 
 describe('intercept', () => {
-  let captured: { stdout: string[]; stderr: string[] }
   let originalLog: typeof console.log
   let originalInfo: typeof console.info
   let originalWarn: typeof console.warn
@@ -11,14 +33,12 @@ describe('intercept', () => {
   let originalDebug: typeof console.debug
 
   beforeEach(() => {
-    captured = { stdout: [], stderr: [] }
     originalLog = console.log
     originalInfo = console.info
     originalWarn = console.warn
     originalError = console.error
     originalDebug = console.debug
 
-    // Clear the guard so intercept can run again
     ;(globalThis as Record<string, unknown>).__jsonlLoggerIntercepted =
       undefined
   })
@@ -33,17 +53,16 @@ describe('intercept', () => {
       undefined
   })
 
-  async function loadAndIntercept(options?: Record<string, unknown>) {
-    // We need to dynamically import to get fresh module state
-    // But since write is cached at module load, we mock it by patching the console methods after intercept
+  async function setupIntercept(options?: Record<string, unknown>) {
+    const spy = createSpyFormatter()
     const { intercept } = await import('../src/intercept')
-    intercept(options as never)
+    intercept({ formatter: spy, ...options } as never)
+    return spy
   }
 
   test('overrides console methods', async () => {
-    await loadAndIntercept()
+    await setupIntercept()
 
-    // After interception, console.log should not be the original
     expect(console.log).not.toBe(originalLog)
     expect(console.info).not.toBe(originalInfo)
     expect(console.warn).not.toBe(originalWarn)
@@ -52,10 +71,9 @@ describe('intercept', () => {
   })
 
   test('idempotent — second call is a no-op', async () => {
-    await loadAndIntercept()
+    await setupIntercept()
     const afterFirst = console.log
 
-    // Call again
     const { intercept } = await import('../src/intercept')
     intercept()
 
@@ -68,170 +86,102 @@ describe('intercept', () => {
     expect(typeof originalConsole.error).toBe('function')
   })
 
-  test('passes through already-formatted JSON (VictoriaLogs)', async () => {
-    await loadAndIntercept()
-
-    // Capture what write() produces by spying on process.stdout.write
-    const writes: string[] = []
-    const origWrite = process.stdout.write
-    process.stdout.write = ((data: string) => {
-      writes.push(data)
-      return true
-    }) as typeof process.stdout.write
+  test('passes through already-formatted JSON', async () => {
+    const spy = await setupIntercept()
 
     const json =
       '{"_msg":"hello","_time":"2025-01-01T00:00:00.000Z","level":"info"}'
     console.log(json)
 
-    process.stdout.write = origWrite
-
-    // Should pass through as-is (with trailing newline)
-    expect(writes.length).toBe(1)
-    expect(writes[0]).toBe(`${json}\n`)
+    // Passthrough — formatter should NOT be called
+    expect(spy.records.length).toBe(0)
   })
 
-  test('passes through already-formatted JSON (Google Cloud)', async () => {
-    const { googleCloud } = await import('../src/google-cloud')
+  test('passes through with Google Cloud messageKey', async () => {
     ;(globalThis as Record<string, unknown>).__jsonlLoggerIntercepted =
       undefined
-    await loadAndIntercept({ formatter: googleCloud })
 
-    const writes: string[] = []
-    const origWrite = process.stdout.write
-    process.stdout.write = ((data: string) => {
-      writes.push(data)
-      return true
-    }) as typeof process.stdout.write
+    const records: LogRecord[] = []
+    const gclSpy: Formatter & { records: LogRecord[] } = {
+      messageKey: 'message',
+      records,
+      format(record: LogRecord) {
+        records.push(record)
+        return { message: record.message, severity: 'INFO' }
+      },
+    }
+
+    const { intercept } = await import('../src/intercept')
+    intercept({ formatter: gclSpy })
 
     const json =
       '{"message":"hello","timestamp":"2025-01-01T00:00:00.000Z","severity":"INFO"}'
     console.log(json)
 
-    process.stdout.write = origWrite
-
-    expect(writes.length).toBe(1)
-    expect(writes[0]).toBe(`${json}\n`)
+    // Passthrough — formatter should NOT be called
+    expect(gclSpy.records.length).toBe(0)
   })
 
-  test('converts plain console.log to JSON', async () => {
-    await loadAndIntercept()
-
-    const writes: string[] = []
-    const origWrite = process.stdout.write
-    process.stdout.write = ((data: string) => {
-      writes.push(data)
-      return true
-    }) as typeof process.stdout.write
+  test('converts plain console.log to structured log', async () => {
+    const spy = await setupIntercept()
 
     console.log('hello world')
 
-    process.stdout.write = origWrite
-
-    expect(writes.length).toBe(1)
-    const parsed = JSON.parse(writes[0])
-    expect(parsed._msg).toBe('hello world')
-    expect(parsed.level).toBe('info')
+    expect(spy.records.length).toBe(1)
+    expect(spy.records[0].message).toBe('hello world')
+    expect(spy.records[0].level).toBe('info')
   })
 
   test('console.error maps to error level', async () => {
-    await loadAndIntercept()
-
-    const writes: string[] = []
-    const origWrite = process.stderr.write
-    process.stderr.write = ((data: string) => {
-      writes.push(data)
-      return true
-    }) as typeof process.stderr.write
+    const spy = await setupIntercept()
 
     console.error('bad thing')
 
-    process.stderr.write = origWrite
-
-    expect(writes.length).toBe(1)
-    const parsed = JSON.parse(writes[0])
-    expect(parsed._msg).toBe('bad thing')
-    expect(parsed.level).toBe('error')
+    expect(spy.records.length).toBe(1)
+    expect(spy.records[0].message).toBe('bad thing')
+    expect(spy.records[0].level).toBe('error')
   })
 
   test('filter option suppresses messages', async () => {
     ;(globalThis as Record<string, unknown>).__jsonlLoggerIntercepted =
       undefined
 
-    const filter = (level: LogLevel, message: string) =>
+    const spy = createSpyFormatter()
+    const filter = (_level: LogLevel, message: string) =>
       !message.includes('skip-me')
 
     const { intercept } = await import('../src/intercept')
-    intercept({ filter })
-
-    const writes: string[] = []
-    const origWrite = process.stdout.write
-    process.stdout.write = ((data: string) => {
-      writes.push(data)
-      return true
-    }) as typeof process.stdout.write
+    intercept({ formatter: spy, filter })
 
     console.log('keep-me')
     console.log('skip-me please')
 
-    process.stdout.write = origWrite
-
-    expect(writes.length).toBe(1)
-    const parsed = JSON.parse(writes[0])
-    expect(parsed._msg).toBe('keep-me')
+    expect(spy.records.length).toBe(1)
+    expect(spy.records[0].message).toBe('keep-me')
   })
 
   test('strips ANSI from intercepted output', async () => {
-    await loadAndIntercept()
-
-    const writes: string[] = []
-    const origWrite = process.stdout.write
-    process.stdout.write = ((data: string) => {
-      writes.push(data)
-      return true
-    }) as typeof process.stdout.write
+    const spy = await setupIntercept()
 
     console.log('\x1b[31mRed text\x1b[0m')
 
-    process.stdout.write = origWrite
-
-    const parsed = JSON.parse(writes[0])
-    expect(parsed._msg).toBe('Red text')
+    expect(spy.records[0].message).toBe('Red text')
   })
 
   test('extracts Error objects', async () => {
-    await loadAndIntercept()
-
-    const writes: string[] = []
-    const origWrite = process.stderr.write
-    process.stderr.write = ((data: string) => {
-      writes.push(data)
-      return true
-    }) as typeof process.stderr.write
+    const spy = await setupIntercept()
 
     console.error('failure', new Error('boom'))
 
-    process.stderr.write = origWrite
-
-    const parsed = JSON.parse(writes[0])
-    expect(parsed['error.name']).toBe('Error')
-    expect(parsed['error.message']).toBe('boom')
+    expect(spy.records[0].error?.name).toBe('Error')
+    expect(spy.records[0].error?.message).toBe('boom')
   })
 
   test('extracts metadata objects', async () => {
-    await loadAndIntercept()
-
-    const writes: string[] = []
-    const origWrite = process.stdout.write
-    process.stdout.write = ((data: string) => {
-      writes.push(data)
-      return true
-    }) as typeof process.stdout.write
+    const spy = await setupIntercept()
 
     console.log('event', { userId: '42' })
 
-    process.stdout.write = origWrite
-
-    const parsed = JSON.parse(writes[0])
-    expect(parsed.userId).toBe('42')
+    expect(spy.records[0].context.userId).toBe('42')
   })
 })
