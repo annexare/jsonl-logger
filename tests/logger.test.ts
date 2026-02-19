@@ -283,6 +283,17 @@ describe('errorInfo()', () => {
     expect(info.cause).toBeUndefined()
   })
 
+  test('extracts deep cause chain (3 levels)', () => {
+    const c = new Error('root')
+    const b = new Error('middle', { cause: c })
+    const a = new Error('top', { cause: b })
+    const info = errorInfo(a)
+    expect(info.message).toBe('top')
+    expect(info.cause!.message).toBe('middle')
+    expect(info.cause!.cause!.message).toBe('root')
+    expect(info.cause!.cause!.cause).toBeUndefined()
+  })
+
   test('handles circular cause chain without crashing', () => {
     const a = new Error('A')
     const b = new Error('B', { cause: a })
@@ -311,6 +322,34 @@ describe('JSON mode error.cause', () => {
     expect(parsed['error.cause.name']).toBe('Error')
     expect(parsed['error.cause.message']).toBe('db connection failed')
     expect(parsed['error.cause.stack']).toBeDefined()
+  })
+
+  test('flattens 3-level cause chain', () => {
+    const logger = new Logger(undefined, { json: true })
+    const c = new Error('root')
+    const b = new Error('middle', { cause: c })
+    const a = new Error('top', { cause: b })
+    logger.error('deep', undefined, a)
+
+    const parsed = JSON.parse(output.stderr[0])
+    expect(parsed['error.message']).toBe('top')
+    expect(parsed['error.cause.message']).toBe('middle')
+    expect(parsed['error.cause.cause.message']).toBe('root')
+    expect(parsed['error.cause.cause.cause.name']).toBeUndefined()
+  })
+
+  test('includes cause fields with VictoriaLogs formatter', () => {
+    const logger = new Logger(undefined, { json: true, formatter: VictoriaLogs })
+    const inner = new Error('db failed')
+    const outer = new Error('query failed', { cause: inner })
+    logger.error('Op failed', undefined, outer)
+
+    const parsed = JSON.parse(output.stderr[0])
+    expect(parsed._msg).toBe('Op failed')
+    expect(parsed['error.name']).toBe('Error')
+    expect(parsed['error.message']).toBe('query failed')
+    expect(parsed['error.cause.name']).toBe('Error')
+    expect(parsed['error.cause.message']).toBe('db failed')
   })
 
   test('error without cause omits cause fields', () => {
@@ -361,6 +400,20 @@ describe('plain mode stack traces', () => {
     expect(out).toContain('Error: fetch failed')
     expect(out).toContain('Caused by:')
     expect(out).toContain('ECONNREFUSED')
+  })
+
+  test('shows full cause chain (3 levels) in plain mode', () => {
+    const logger = new Logger(undefined, { json: false })
+    const c = new Error('root')
+    const b = new Error('middle', { cause: c })
+    const a = new Error('top', { cause: b })
+    logger.error('Deep error', undefined, a)
+
+    const out = consoleSpy.error.mock.calls[0]?.[0] as string
+    expect(out).toContain('Error: top')
+    expect(out).toContain('Caused by:')
+    expect(out).toContain('middle')
+    expect(out).toContain('root')
   })
 
   test('error without stack shows name: message fallback', () => {

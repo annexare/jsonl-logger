@@ -141,14 +141,18 @@ export class Logger {
 
     let errStr = ''
     if (record.error) {
-      errStr = record.error.stack
-        ? `\n${record.error.stack}`
-        : `\n  ${record.error.name}: ${record.error.message}`
-      if (record.error.cause) {
-        const cause = record.error.cause
-        errStr += cause.stack
-          ? `\nCaused by: ${cause.stack}`
-          : `\nCaused by: ${cause.name}: ${cause.message}`
+      let current: ErrorInfo | undefined = record.error
+      let isRoot = true
+      while (current) {
+        if (current.stack) {
+          errStr += isRoot ? `\n${current.stack}` : `\nCaused by: ${current.stack}`
+        } else {
+          errStr += isRoot
+            ? `\n  ${current.name}: ${current.message}`
+            : `\nCaused by: ${current.name}: ${current.message}`
+        }
+        current = current.cause
+        isRoot = false
       }
     }
 
