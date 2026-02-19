@@ -1,3 +1,8 @@
+[![Monthly Downloads](https://img.shields.io/npm/dm/jsonl-logger.svg)](https://www.npmjs.com/package/jsonl-logger)
+[![NPM](https://img.shields.io/npm/v/jsonl-logger.svg 'NPM package version')](https://www.npmjs.com/package/jsonl-logger)
+[![CI](https://github.com/annexare/jsonl-logger/actions/workflows/ci.yml/badge.svg)](https://github.com/annexare/jsonl-logger/actions/workflows/ci.yml)
+
+
 # JSONL Logger
 
 Lightweight JSON Lines logger with pluggable formatters (**Google Cloud Logging**, **VictoriaLogs**). Modern **ESM**-only, zero dependencies, Bun-first, works on Node.js and Deno.
