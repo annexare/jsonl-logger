@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, mock, test } from 'bun:test'
 
-import { Logger, errorInfo } from '../src/index'
+import { errorInfo, Logger } from '../src/index'
 import { VictoriaLogs } from '../src/victoria-logs'
 
 let output: { stdout: string[]; stderr: string[] }
