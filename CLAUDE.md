@@ -34,6 +34,7 @@ tests/
 - **`write()`** bypasses `console.*` to avoid interception loops — writes directly to `process.stdout`/`process.stderr` (Node/Bun), `Deno.stdout`/`Deno.stderr`, or falls back to `console.log`/`console.error`.
 - **Intercept passthrough** — JSON strings that already contain the formatter's `messageKey` are written as-is, preventing double-formatting when `Logger` output goes through intercepted console.
 - **TitleCase exports** for formatters (`GoogleCloudLogging`, `VictoriaLogs`) — they are objects conforming to the `Formatter` type.
+- **Error cause chains** — `errorInfo()` recursively extracts `Error.cause` into `ErrorInfo.cause`. Both `Logger.log()` and `intercept()` use it. In dev mode, causes are shown as `Caused by: ...` below the main stack. In JSON mode, they appear as `error.cause.name/message/stack` fields.
 
 ## Conventions
 
