@@ -1,6 +1,6 @@
 # jsonl-logger
 
-Lightweight JSON Lines logger with pluggable formatters. Zero dependencies, Bun-first, works on Node.js and Deno.
+Lightweight JSON Lines logger with pluggable formatters. Modern ESM-only, zero dependencies, Bun-first, works on Node.js and Deno.
 
 ## Install
 
@@ -23,13 +23,6 @@ logger.error('Request failed', { path: '/api' }, new Error('timeout'))
 
 Two built-in formatters for popular log backends:
 
-### VictoriaLogs (default)
-
-```typescript
-import { victoriaLogs } from 'jsonl-logger/victoria-logs'
-// Output: {"_msg":"...","_time":"...","level":"info",...}
-```
-
 ### Google Cloud Logging
 
 ```typescript
@@ -38,6 +31,13 @@ import { Logger } from 'jsonl-logger'
 
 const logger = new Logger(undefined, { json: true, formatter: googleCloud })
 // Output: {"message":"...","timestamp":"...","severity":"INFO",...}
+```
+
+### VictoriaLogs (default)
+
+```typescript
+import { victoriaLogs } from 'jsonl-logger/victoria-logs'
+// Output: {"_msg":"...","_time":"...","level":"info",...}
 ```
 
 ### Custom Formatter
@@ -86,7 +86,7 @@ bun --preload jsonl-logger/preload server.js
 ```
 
 Environment variables:
-- `LOG_FORMAT` — `victoria-logs` (default) or `google-cloud`
+- `LOG_FORMAT` — `google-cloud` or `victoria-logs` (default)
 - `LOG_LEVEL` — `debug`, `info` (default), `warn`, `error`, `fatal`
 
 ## Child Loggers
@@ -103,7 +103,7 @@ requestLogger.info('Processing request')
 |----------|---------|-------------|
 | `JSON_LOGS` | `false` | Enable JSON output (`true` for production) |
 | `LOG_LEVEL` | `info`/`debug` | Minimum log level (defaults to `info` when JSON, `debug` otherwise) |
-| `LOG_FORMAT` | `victoria-logs` | Formatter for preload module |
+| `LOG_FORMAT` | `victoria-logs` | Formatter for preload module (`google-cloud` or `victoria-logs`) |
 
 ## Runtime Detection
 
@@ -117,8 +117,8 @@ The logger auto-detects the runtime and uses the fastest available I/O:
 | Subpath | Export |
 |---------|--------|
 | `jsonl-logger` | `Logger`, `logger`, types |
-| `jsonl-logger/victoria-logs` | `victoriaLogs` formatter |
 | `jsonl-logger/google-cloud` | `googleCloud` formatter |
+| `jsonl-logger/victoria-logs` | `victoriaLogs` formatter |
 | `jsonl-logger/intercept` | `intercept()`, `originalConsole` |
 | `jsonl-logger/preload` | Side-effect auto-intercept |
 
