@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     container: oven/bun:alpine
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - run: bun install --frozen-lockfile
       - run: bun run build:types
       - run: bun run lint
