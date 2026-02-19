@@ -21,6 +21,8 @@ export type LoggerOptions = {
   level?: LogLevel
 }
 
+export type FormatterName = 'google-cloud-logging' | 'victoria-logs'
+
 export type InterceptOptions = {
   formatter?: Formatter
   filter?: (level: LogLevel, message: string) => boolean

@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test'
 
 import type { LogRecord } from '../src/types'
-import { victoriaLogs } from '../src/victoria-logs'
+import { VictoriaLogs } from '../src/victoria-logs'
 
 function record(overrides?: Partial<LogRecord>): LogRecord {
   return {
@@ -13,20 +13,20 @@ function record(overrides?: Partial<LogRecord>): LogRecord {
   }
 }
 
-describe('victoriaLogs formatter', () => {
+describe('VictoriaLogs formatter', () => {
   test('messageKey is _msg', () => {
-    expect(victoriaLogs.messageKey).toBe('_msg')
+    expect(VictoriaLogs.messageKey).toBe('_msg')
   })
 
   test('formats basic record', () => {
-    const out = victoriaLogs.format(record())
+    const out = VictoriaLogs.format(record())
     expect(out._msg).toBe('test')
     expect(out._time).toBe('2025-01-01T00:00:00.000Z')
     expect(out.level).toBe('info')
   })
 
   test('includes context fields at top level', () => {
-    const out = victoriaLogs.format(
+    const out = VictoriaLogs.format(
       record({ context: { userId: '42', service: 'api' } }),
     )
     expect(out.userId).toBe('42')
@@ -34,7 +34,7 @@ describe('victoriaLogs formatter', () => {
   })
 
   test('includes error fields with dot notation', () => {
-    const out = victoriaLogs.format(
+    const out = VictoriaLogs.format(
       record({
         error: { name: 'TypeError', message: 'bad', stack: 'at foo:1' },
       }),
@@ -45,7 +45,7 @@ describe('victoriaLogs formatter', () => {
   })
 
   test('omits error.stack when undefined', () => {
-    const out = victoriaLogs.format(
+    const out = VictoriaLogs.format(
       record({
         error: { name: 'Error', message: 'oops' },
       }),
@@ -56,7 +56,7 @@ describe('victoriaLogs formatter', () => {
 
   test('all log levels are passed through', () => {
     for (const level of ['debug', 'info', 'warn', 'error', 'fatal'] as const) {
-      const out = victoriaLogs.format(record({ level }))
+      const out = VictoriaLogs.format(record({ level }))
       expect(out.level).toBe(level)
     }
   })

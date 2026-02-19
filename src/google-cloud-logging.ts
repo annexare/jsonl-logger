@@ -8,7 +8,7 @@ const severityMap: Record<LogLevel, string> = {
   fatal: 'CRITICAL',
 }
 
-export const googleCloud: Formatter = {
+export const GoogleCloudLogging: Formatter = {
   messageKey: 'message',
   format(record: LogRecord): Record<string, unknown> {
     const entry: Record<string, unknown> = {

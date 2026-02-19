@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, mock, test } from 'bun:test'
 
-import { googleCloud } from '../src/google-cloud'
 import { Logger } from '../src/index'
+import { VictoriaLogs } from '../src/victoria-logs'
 
 let output: { stdout: string[]; stderr: string[] }
 
@@ -31,9 +31,9 @@ describe('Logger JSON mode', () => {
 
     expect(output.stdout.length).toBe(1)
     const parsed = JSON.parse(output.stdout[0])
-    expect(parsed._msg).toBe('Test message')
-    expect(parsed.level).toBe('info')
-    expect(parsed._time).toBeDefined()
+    expect(parsed.message).toBe('Test message')
+    expect(parsed.severity).toBe('INFO')
+    expect(parsed.timestamp).toBeDefined()
   })
 
   test('error() writes JSON to stderr', () => {
@@ -42,8 +42,8 @@ describe('Logger JSON mode', () => {
 
     expect(output.stderr.length).toBe(1)
     const parsed = JSON.parse(output.stderr[0])
-    expect(parsed._msg).toBe('Error message')
-    expect(parsed.level).toBe('error')
+    expect(parsed.message).toBe('Error message')
+    expect(parsed.severity).toBe('ERROR')
   })
 
   test('fatal() writes JSON to stderr', () => {
@@ -52,7 +52,7 @@ describe('Logger JSON mode', () => {
 
     expect(output.stderr.length).toBe(1)
     const parsed = JSON.parse(output.stderr[0])
-    expect(parsed._msg).toBe('Fatal message')
+    expect(parsed.message).toBe('Fatal message')
   })
 
   test('warn() writes JSON to stdout', () => {
@@ -71,7 +71,7 @@ describe('Logger JSON mode', () => {
 
     expect(output.stdout.length).toBe(1)
     const parsed = JSON.parse(output.stdout[0])
-    expect(parsed._msg).toBe('Debug message')
+    expect(parsed.message).toBe('Debug message')
   })
 
   test('strips ANSI codes', () => {
@@ -79,7 +79,7 @@ describe('Logger JSON mode', () => {
     logger.info('\x1b[31mRed text\x1b[0m')
 
     const parsed = JSON.parse(output.stdout[0])
-    expect(parsed._msg).toBe('Red text')
+    expect(parsed.message).toBe('Red text')
   })
 
   test('includes metadata', () => {
@@ -114,13 +114,16 @@ describe('Logger JSON mode', () => {
   })
 
   test('uses custom formatter', () => {
-    const logger = new Logger(undefined, { json: true, formatter: googleCloud })
-    logger.info('GCL test')
+    const logger = new Logger(undefined, {
+      json: true,
+      formatter: VictoriaLogs,
+    })
+    logger.info('VL test')
 
     const parsed = JSON.parse(output.stdout[0])
-    expect(parsed.message).toBe('GCL test')
-    expect(parsed.severity).toBe('INFO')
-    expect(parsed._msg).toBeUndefined()
+    expect(parsed._msg).toBe('VL test')
+    expect(parsed.level).toBe('info')
+    expect(parsed.message).toBeUndefined()
   })
 })
 
@@ -212,7 +215,7 @@ describe('child logger', () => {
     child.info('Request started')
 
     const parsed = JSON.parse(output.stdout[0])
-    expect(parsed._msg).toBe('Request started')
+    expect(parsed.message).toBe('Request started')
     expect(parsed.requestId).toBe('abc-123')
   })
 
@@ -238,12 +241,15 @@ describe('child logger', () => {
   })
 
   test('inherits formatter', () => {
-    const logger = new Logger(undefined, { json: true, formatter: googleCloud })
+    const logger = new Logger(undefined, {
+      json: true,
+      formatter: VictoriaLogs,
+    })
     const child = logger.child({ service: 'api' })
     child.info('Test')
 
     const parsed = JSON.parse(output.stdout[0])
-    expect(parsed.severity).toBe('INFO')
-    expect(parsed.message).toBe('Test')
+    expect(parsed._msg).toBe('Test')
+    expect(parsed.level).toBe('info')
   })
 })

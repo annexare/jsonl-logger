@@ -1,15 +1,16 @@
-import { googleCloud } from './google-cloud'
+import { GoogleCloudLogging } from './google-cloud-logging'
 import { intercept } from './intercept'
-import type { Formatter } from './types'
-import { victoriaLogs } from './victoria-logs'
+import type { Formatter, FormatterName } from './types'
+import { VictoriaLogs } from './victoria-logs'
 
-const formatters: Record<string, Formatter> = {
-  'victoria-logs': victoriaLogs,
-  'google-cloud': googleCloud,
+const formatters: Record<FormatterName, Formatter> = {
+  'google-cloud-logging': GoogleCloudLogging,
+  'victoria-logs': VictoriaLogs,
 }
 
-const format = process.env.LOG_FORMAT || 'victoria-logs'
-const formatter = formatters[format] ?? victoriaLogs
+const format = (process.env.LOG_FORMAT ||
+  'google-cloud-logging') as FormatterName
+const formatter = formatters[format] ?? GoogleCloudLogging
 const level =
   (process.env.LOG_LEVEL as 'debug' | 'info' | 'warn' | 'error' | 'fatal') ||
   'info'

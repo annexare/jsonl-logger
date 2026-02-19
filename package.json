@@ -1,6 +1,6 @@
 {
   "name": "jsonl-logger",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Lightweight ESM-only JSON Lines logger with pluggable formatters for Google Cloud Logging, VictoriaLogs, and more",
   "license": "MIT",
   "type": "module",
@@ -14,10 +14,10 @@
       "import": "./dist/index.js",
       "types": "./dist/index.d.ts"
     },
-    "./google-cloud": {
-      "bun": "./src/google-cloud.ts",
-      "import": "./dist/google-cloud.js",
-      "types": "./dist/google-cloud.d.ts"
+    "./google-cloud-logging": {
+      "bun": "./src/google-cloud-logging.ts",
+      "import": "./dist/google-cloud-logging.js",
+      "types": "./dist/google-cloud-logging.d.ts"
     },
     "./victoria-logs": {
       "bun": "./src/victoria-logs.ts",
@@ -41,7 +41,7 @@
   ],
   "scripts": {
     "build": "bun run build:js && bun run build:types",
-    "build:js": "bun build src/index.ts src/google-cloud.ts src/victoria-logs.ts src/intercept.ts src/preload.ts --outdir dist --target node --format esm --splitting --minify",
+    "build:js": "bun build src/index.ts src/google-cloud-logging.ts src/victoria-logs.ts src/intercept.ts src/preload.ts --outdir dist --target node --format esm --splitting --minify",
     "build:types": "tsc --emitDeclarationOnly",
     "lint": "biome check --write .",
     "test": "bun test"

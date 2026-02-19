@@ -23,20 +23,20 @@ logger.error('Request failed', { path: '/api' }, new Error('timeout'))
 
 Two built-in formatters for popular log backends:
 
-### Google Cloud Logging
+### Google Cloud Logging (default)
 
 ```typescript
-import { googleCloud } from 'jsonl-logger/google-cloud'
-import { Logger } from 'jsonl-logger'
-
-const logger = new Logger(undefined, { json: true, formatter: googleCloud })
+import { logger } from 'jsonl-logger'
 // Output: {"message":"...","timestamp":"...","severity":"INFO",...}
 ```
 
-### VictoriaLogs (default)
+### VictoriaLogs
 
 ```typescript
-import { victoriaLogs } from 'jsonl-logger/victoria-logs'
+import { VictoriaLogs } from 'jsonl-logger/victoria-logs'
+import { Logger } from 'jsonl-logger'
+
+const logger = new Logger(undefined, { json: true, formatter: VictoriaLogs })
 // Output: {"_msg":"...","_time":"...","level":"info",...}
 ```
 
@@ -64,8 +64,8 @@ Monkey-patch `console.*` methods to output structured JSON — captures logs fro
 import { intercept, originalConsole } from 'jsonl-logger/intercept'
 
 intercept({
-  // Optional: custom formatter (default: victoriaLogs)
-  formatter: googleCloud,
+  // Optional: custom formatter (default: GoogleCloudLogging)
+  formatter: VictoriaLogs,
   // Optional: filter out noisy messages
   filter: (level, message) => !message.includes('deprecation'),
   // Optional: minimum log level
@@ -86,7 +86,7 @@ bun --preload jsonl-logger/preload server.js
 ```
 
 Environment variables:
-- `LOG_FORMAT` — `google-cloud` or `victoria-logs` (default)
+- `LOG_FORMAT` — `google-cloud-logging` (default) or `victoria-logs`
 - `LOG_LEVEL` — `debug`, `info` (default), `warn`, `error`, `fatal`
 
 ## Child Loggers
@@ -103,7 +103,7 @@ requestLogger.info('Processing request')
 |----------|---------|-------------|
 | `JSON_LOGS` | `false` | Enable JSON output (`true` for production) |
 | `LOG_LEVEL` | `info`/`debug` | Minimum log level (defaults to `info` when JSON, `debug` otherwise) |
-| `LOG_FORMAT` | `victoria-logs` | Formatter for preload module (`google-cloud` or `victoria-logs`) |
+| `LOG_FORMAT` | `google-cloud-logging` | Formatter for preload module (`google-cloud-logging` or `victoria-logs`) |
 
 ## Runtime Detection
 
@@ -117,8 +117,8 @@ The logger auto-detects the runtime and uses the fastest available I/O:
 | Subpath | Export |
 |---------|--------|
 | `jsonl-logger` | `Logger`, `logger`, types |
-| `jsonl-logger/google-cloud` | `googleCloud` formatter |
-| `jsonl-logger/victoria-logs` | `victoriaLogs` formatter |
+| `jsonl-logger/google-cloud-logging` | `GoogleCloudLogging` formatter |
+| `jsonl-logger/victoria-logs` | `VictoriaLogs` formatter |
 | `jsonl-logger/intercept` | `intercept()`, `originalConsole` |
 | `jsonl-logger/preload` | Side-effect auto-intercept |
 

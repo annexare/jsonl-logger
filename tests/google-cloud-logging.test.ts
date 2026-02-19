@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test'
 
-import { googleCloud } from '../src/google-cloud'
+import { GoogleCloudLogging } from '../src/google-cloud-logging'
 import type { LogRecord } from '../src/types'
 
 function record(overrides?: Partial<LogRecord>): LogRecord {
@@ -13,13 +13,13 @@ function record(overrides?: Partial<LogRecord>): LogRecord {
   }
 }
 
-describe('googleCloud formatter', () => {
+describe('GoogleCloudLogging formatter', () => {
   test('messageKey is message', () => {
-    expect(googleCloud.messageKey).toBe('message')
+    expect(GoogleCloudLogging.messageKey).toBe('message')
   })
 
   test('formats basic record', () => {
-    const out = googleCloud.format(record())
+    const out = GoogleCloudLogging.format(record())
     expect(out.message).toBe('test')
     expect(out.timestamp).toBe('2025-01-01T00:00:00.000Z')
     expect(out.severity).toBe('INFO')
@@ -34,18 +34,20 @@ describe('googleCloud formatter', () => {
       ['fatal', 'CRITICAL'],
     ]
     for (const [level, expected] of cases) {
-      const out = googleCloud.format(record({ level }))
+      const out = GoogleCloudLogging.format(record({ level }))
       expect(out.severity).toBe(expected)
     }
   })
 
   test('includes context fields', () => {
-    const out = googleCloud.format(record({ context: { requestId: 'abc' } }))
+    const out = GoogleCloudLogging.format(
+      record({ context: { requestId: 'abc' } }),
+    )
     expect(out.requestId).toBe('abc')
   })
 
   test('includes error fields with dot notation', () => {
-    const out = googleCloud.format(
+    const out = GoogleCloudLogging.format(
       record({
         error: {
           name: 'RangeError',
@@ -60,7 +62,7 @@ describe('googleCloud formatter', () => {
   })
 
   test('does not include _msg or _time fields', () => {
-    const out = googleCloud.format(record())
+    const out = GoogleCloudLogging.format(record())
     expect(out._msg).toBeUndefined()
     expect(out._time).toBeUndefined()
   })

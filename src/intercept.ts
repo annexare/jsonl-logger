@@ -1,6 +1,6 @@
+import { GoogleCloudLogging } from './google-cloud-logging'
 import type { Formatter, InterceptOptions, LogLevel } from './types'
 import { logLevelValues, stripAnsi, write } from './types'
-import { victoriaLogs } from './victoria-logs'
 
 type ConsoleMethods = {
   log: typeof console.log
@@ -118,7 +118,7 @@ export function intercept(options?: InterceptOptions): void {
   if ((globalThis as Record<string, unknown>)[guardKey]) return
   ;(globalThis as Record<string, unknown>)[guardKey] = true
 
-  const formatter = options?.formatter ?? victoriaLogs
+  const formatter = options?.formatter ?? GoogleCloudLogging
   const minLevel = logLevelValues[options?.level ?? 'debug']
   const filter = options?.filter
 

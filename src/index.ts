@@ -1,3 +1,4 @@
+import { GoogleCloudLogging } from './google-cloud-logging'
 import type {
   Formatter,
   LogContext,
@@ -6,10 +7,10 @@ import type {
   LogRecord,
 } from './types'
 import { logLevelValues, stripAnsi, write } from './types'
-import { victoriaLogs } from './victoria-logs'
 
 export type {
   Formatter,
+  FormatterName,
   InterceptOptions,
   LogContext,
   LoggerOptions,
@@ -40,7 +41,7 @@ export class Logger {
   constructor(context?: LogContext, options?: LoggerOptions) {
     this.ctx = context || {}
     this.json = options?.json ?? defaultJson
-    this.fmt = options?.formatter ?? victoriaLogs
+    this.fmt = options?.formatter ?? GoogleCloudLogging
     const level: LogLevel = options?.level ?? defaultLevel
     this.min = logLevelValues[level] ?? logLevelValues.info
   }
