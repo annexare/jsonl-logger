@@ -1,6 +1,6 @@
 {
   "name": "jsonl-logger",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Lightweight ESM-only JSON Lines logger with pluggable formatters for Google Cloud Logging, VictoriaLogs, and more",
   "license": "MIT",
   "type": "module",
@@ -37,7 +37,9 @@
   },
   "files": [
     "dist",
-    "src"
+    "src",
+    "LICENSE",
+    "README.md"
   ],
   "scripts": {
     "build": "bun run build:js && bun run build:types",
