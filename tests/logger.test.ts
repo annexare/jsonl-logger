@@ -282,6 +282,20 @@ describe('errorInfo()', () => {
     const info = errorInfo(err)
     expect(info.cause).toBeUndefined()
   })
+
+  test('handles circular cause chain without crashing', () => {
+    const a = new Error('A')
+    const b = new Error('B', { cause: a })
+    // Create cycle: a.cause -> b -> a -> ...
+    a.cause = b
+    const info = errorInfo(a)
+    expect(info.name).toBe('Error')
+    expect(info.message).toBe('A')
+    expect(info.cause).toBeDefined()
+    expect(info.cause!.message).toBe('B')
+    // Cycle broken — b's cause (a) was already visited
+    expect(info.cause!.cause).toBeUndefined()
+  })
 })
 
 describe('JSON mode error.cause', () => {

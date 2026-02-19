@@ -10,6 +10,7 @@ import type {
 } from './types'
 import {
   defaultFormat,
+  flattenError,
   isJsonMode,
   logLevelValues,
   stripAnsi,
@@ -49,13 +50,20 @@ const isErrorLevel: Record<LogLevel, boolean> = {
   fatal: true,
 }
 
-export function errorInfo(err: Error): ErrorInfo {
+function extractErrorInfo(err: Error, visited: WeakSet<Error>): ErrorInfo {
+  visited.add(err)
   return {
     name: err.name,
     message: err.message,
     stack: err.stack,
-    ...(err.cause instanceof Error ? { cause: errorInfo(err.cause) } : {}),
+    ...(err.cause instanceof Error && !visited.has(err.cause)
+      ? { cause: extractErrorInfo(err.cause, visited) }
+      : {}),
   }
+}
+
+export function errorInfo(err: Error): ErrorInfo {
+  return extractErrorInfo(err, new WeakSet())
 }
 
 export class Logger {
@@ -104,7 +112,9 @@ export class Logger {
     }
 
     if (this.json) {
-      write(JSON.stringify(this.fmt.format(record)), isErrorLevel[level])
+      const formatted = this.fmt.format(record)
+      if (record.error) flattenError(formatted, record.error)
+      write(JSON.stringify(formatted), isErrorLevel[level])
     } else {
       this.logPlain(level, record)
     }

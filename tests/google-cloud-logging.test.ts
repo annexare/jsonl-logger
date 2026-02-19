@@ -46,52 +46,6 @@ describe('GoogleCloudLogging formatter', () => {
     expect(out.requestId).toBe('abc')
   })
 
-  test('includes error fields with dot notation', () => {
-    const out = GoogleCloudLogging.format(
-      record({
-        error: {
-          name: 'RangeError',
-          message: 'out of bounds',
-          stack: 'at bar:2',
-        },
-      }),
-    )
-    expect(out['error.name']).toBe('RangeError')
-    expect(out['error.message']).toBe('out of bounds')
-    expect(out['error.stack']).toBe('at bar:2')
-  })
-
-  test('includes error.cause fields', () => {
-    const out = GoogleCloudLogging.format(
-      record({
-        error: {
-          name: 'Error',
-          message: 'outer',
-          stack: 'at foo:1',
-          cause: {
-            name: 'TypeError',
-            message: 'inner',
-            stack: 'at bar:2',
-          },
-        },
-      }),
-    )
-    expect(out['error.cause.name']).toBe('TypeError')
-    expect(out['error.cause.message']).toBe('inner')
-    expect(out['error.cause.stack']).toBe('at bar:2')
-  })
-
-  test('omits error.cause fields when no cause', () => {
-    const out = GoogleCloudLogging.format(
-      record({
-        error: { name: 'Error', message: 'no cause', stack: 'at foo:1' },
-      }),
-    )
-    expect(out['error.cause.name']).toBeUndefined()
-    expect(out['error.cause.message']).toBeUndefined()
-    expect(out['error.cause.stack']).toBeUndefined()
-  })
-
   test('does not include _msg or _time fields', () => {
     const out = GoogleCloudLogging.format(record())
     expect(out._msg).toBeUndefined()

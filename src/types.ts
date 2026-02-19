@@ -54,6 +54,17 @@ export function stripAnsi(str: string): string {
   return str.replace(ansiPattern, '')
 }
 
+export function flattenError(
+  entry: Record<string, unknown>,
+  error: ErrorInfo,
+  prefix = 'error',
+): void {
+  entry[`${prefix}.name`] = error.name
+  entry[`${prefix}.message`] = error.message
+  if (error.stack) entry[`${prefix}.stack`] = error.stack
+  if (error.cause) flattenError(entry, error.cause, `${prefix}.cause`)
+}
+
 /**
  * Detect runtime once, resolve streams at call time.
  * Stream lookup is deferred so tests/runtime can replace process.stdout.
