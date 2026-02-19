@@ -89,6 +89,7 @@ describe('GoogleCloudLogging formatter', () => {
     )
     expect(out['error.cause.name']).toBeUndefined()
     expect(out['error.cause.message']).toBeUndefined()
+    expect(out['error.cause.stack']).toBeUndefined()
   })
 
   test('does not include _msg or _time fields', () => {

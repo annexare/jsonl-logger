@@ -81,6 +81,8 @@ describe('VictoriaLogs formatter', () => {
       }),
     )
     expect(out['error.cause.name']).toBeUndefined()
+    expect(out['error.cause.message']).toBeUndefined()
+    expect(out['error.cause.stack']).toBeUndefined()
   })
 
   test('all log levels are passed through', () => {
