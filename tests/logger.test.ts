@@ -339,7 +339,10 @@ describe('JSON mode error.cause', () => {
   })
 
   test('includes cause fields with VictoriaLogs formatter', () => {
-    const logger = new Logger(undefined, { json: true, formatter: VictoriaLogs })
+    const logger = new Logger(undefined, {
+      json: true,
+      formatter: VictoriaLogs,
+    })
     const inner = new Error('db failed')
     const outer = new Error('query failed', { cause: inner })
     logger.error('Op failed', undefined, outer)
@@ -359,6 +362,62 @@ describe('JSON mode error.cause', () => {
     const parsed = JSON.parse(output.stderr[0])
     expect(parsed['error.name']).toBe('Error')
     expect(parsed['error.cause.name']).toBeUndefined()
+  })
+})
+
+describe('trace context', () => {
+  const traceContext = () => ({
+    traceId: 'abc123',
+    spanId: 'span456',
+    traceFlags: 1,
+  })
+
+  test('trace fields appear in JSON output when getter returns a value', () => {
+    const logger = new Logger(undefined, { json: true, traceContext })
+    logger.info('traced')
+
+    const parsed = JSON.parse(output.stdout[0])
+    expect(parsed['logging.googleapis.com/trace']).toBe('abc123')
+    expect(parsed['logging.googleapis.com/spanId']).toBe('span456')
+    expect(parsed['logging.googleapis.com/trace_sampled']).toBe(true)
+  })
+
+  test('trace fields absent when getter returns undefined', () => {
+    const logger = new Logger(undefined, {
+      json: true,
+      traceContext: () => undefined,
+    })
+    logger.info('no trace')
+
+    const parsed = JSON.parse(output.stdout[0])
+    expect(parsed['logging.googleapis.com/trace']).toBeUndefined()
+    expect(parsed['logging.googleapis.com/spanId']).toBeUndefined()
+  })
+
+  test('child logger inherits traceContext', () => {
+    const logger = new Logger(undefined, { json: true, traceContext })
+    const child = logger.child({ service: 'api' })
+    child.info('child traced')
+
+    const parsed = JSON.parse(output.stdout[0])
+    expect(parsed['logging.googleapis.com/trace']).toBe('abc123')
+    expect(parsed.service).toBe('api')
+  })
+
+  test('traceContext not called when level is filtered out', () => {
+    let called = false
+    const logger = new Logger(undefined, {
+      json: true,
+      level: 'warn',
+      traceContext: () => {
+        called = true
+        return { traceId: 'x', spanId: 'y' }
+      },
+    })
+    logger.debug('filtered')
+
+    expect(called).toBe(false)
+    expect(output.stdout.length).toBe(0)
   })
 })
 

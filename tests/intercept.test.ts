@@ -185,6 +185,30 @@ describe('intercept', () => {
     expect(spy.records[0].context.userId).toBe('42')
   })
 
+  test('includes trace fields when traceContext option provided', async () => {
+    ;(globalThis as Record<string, unknown>).__jsonlLoggerIntercepted =
+      undefined
+
+    const spy = createSpyFormatter()
+    const { intercept } = await import('../src/intercept')
+    intercept({
+      formatter: spy,
+      traceContext: () => ({
+        traceId: 'trace-abc',
+        spanId: 'span-def',
+        traceFlags: 1,
+      }),
+    })
+
+    console.log('traced message')
+
+    expect(spy.records.length).toBe(1)
+    expect(spy.records[0].trace).toBeDefined()
+    expect(spy.records[0].trace!.traceId).toBe('trace-abc')
+    expect(spy.records[0].trace!.spanId).toBe('span-def')
+    expect(spy.records[0].trace!.traceFlags).toBe(1)
+  })
+
   test('extracts error cause chain', async () => {
     const spy = await setupIntercept()
 

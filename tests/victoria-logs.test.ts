@@ -39,4 +39,31 @@ describe('VictoriaLogs formatter', () => {
       expect(out.level).toBe(level)
     }
   })
+
+  test('includes trace_id and span_id when record.trace is set', () => {
+    const out = VictoriaLogs.format(
+      record({
+        trace: { traceId: 'abc123', spanId: 'span456', traceFlags: 1 },
+      }),
+    )
+    expect(out.trace_id).toBe('abc123')
+    expect(out.span_id).toBe('span456')
+    expect(out.trace_flags).toBe(1)
+  })
+
+  test('omits trace_flags when undefined', () => {
+    const out = VictoriaLogs.format(
+      record({ trace: { traceId: 'abc', spanId: 'def' } }),
+    )
+    expect(out.trace_id).toBe('abc')
+    expect(out.span_id).toBe('def')
+    expect(out.trace_flags).toBeUndefined()
+  })
+
+  test('no trace fields when record.trace is undefined', () => {
+    const out = VictoriaLogs.format(record())
+    expect(out.trace_id).toBeUndefined()
+    expect(out.span_id).toBeUndefined()
+    expect(out.trace_flags).toBeUndefined()
+  })
 })

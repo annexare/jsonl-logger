@@ -7,6 +7,7 @@ import type {
   LoggerOptions,
   LogLevel,
   LogRecord,
+  TraceContext,
 } from './types'
 import {
   defaultFormat,
@@ -27,6 +28,7 @@ export type {
   LoggerOptions,
   LogLevel,
   LogRecord,
+  TraceContext,
 } from './types'
 export { logLevelValues, stripAnsi } from './types'
 
@@ -71,11 +73,13 @@ export class Logger {
   private min: number
   private json: boolean
   private fmt: Formatter
+  private tc?: () => TraceContext | undefined
 
   constructor(context?: LogContext, options?: LoggerOptions) {
     this.ctx = context || {}
     this.json = options?.json ?? defaultJson
     this.fmt = options?.formatter ?? defaultFormatter
+    this.tc = options?.traceContext
     const level: LogLevel = options?.level ?? defaultLevel
     this.min = logLevelValues[level] ?? logLevelValues.info
   }
@@ -86,6 +90,7 @@ export class Logger {
       {
         json: this.json,
         formatter: this.fmt,
+        traceContext: this.tc,
       },
     )
     child.min = this.min
@@ -105,6 +110,10 @@ export class Logger {
       message: this.json ? stripAnsi(message).trim() : message,
       timestamp: new Date().toISOString(),
       context: meta ? { ...this.ctx, ...meta } : this.ctx,
+    }
+
+    if (this.tc) {
+      record.trace = this.tc()
     }
 
     if (err) {
@@ -145,7 +154,9 @@ export class Logger {
       let isRoot = true
       while (current) {
         if (current.stack) {
-          errStr += isRoot ? `\n${current.stack}` : `\nCaused by: ${current.stack}`
+          errStr += isRoot
+            ? `\n${current.stack}`
+            : `\nCaused by: ${current.stack}`
         } else {
           errStr += isRoot
             ? `\n  ${current.name}: ${current.message}`

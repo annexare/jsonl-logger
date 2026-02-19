@@ -51,4 +51,38 @@ describe('GoogleCloudLogging formatter', () => {
     expect(out._msg).toBeUndefined()
     expect(out._time).toBeUndefined()
   })
+
+  test('includes GCL trace fields when record.trace is set', () => {
+    const out = GoogleCloudLogging.format(
+      record({
+        trace: { traceId: 'abc123', spanId: 'span456', traceFlags: 1 },
+      }),
+    )
+    expect(out['logging.googleapis.com/trace']).toBe('abc123')
+    expect(out['logging.googleapis.com/spanId']).toBe('span456')
+    expect(out['logging.googleapis.com/trace_sampled']).toBe(true)
+  })
+
+  test('trace_sampled is false when traceFlags bit 0 is unset', () => {
+    const out = GoogleCloudLogging.format(
+      record({ trace: { traceId: 'abc', spanId: 'def', traceFlags: 0 } }),
+    )
+    expect(out['logging.googleapis.com/trace_sampled']).toBe(false)
+  })
+
+  test('omits trace_sampled when traceFlags is undefined', () => {
+    const out = GoogleCloudLogging.format(
+      record({ trace: { traceId: 'abc', spanId: 'def' } }),
+    )
+    expect(out['logging.googleapis.com/trace']).toBe('abc')
+    expect(out['logging.googleapis.com/spanId']).toBe('def')
+    expect(out['logging.googleapis.com/trace_sampled']).toBeUndefined()
+  })
+
+  test('no trace fields when record.trace is undefined', () => {
+    const out = GoogleCloudLogging.format(record())
+    expect(out['logging.googleapis.com/trace']).toBeUndefined()
+    expect(out['logging.googleapis.com/spanId']).toBeUndefined()
+    expect(out['logging.googleapis.com/trace_sampled']).toBeUndefined()
+  })
 })

@@ -9,6 +9,13 @@ export const VictoriaLogs: Formatter = {
       level: record.level,
       ...record.context,
     }
+    if (record.trace) {
+      entry.trace_id = record.trace.traceId
+      entry.span_id = record.trace.spanId
+      if (record.trace.traceFlags !== undefined) {
+        entry.trace_flags = record.trace.traceFlags
+      }
+    }
     return entry
   },
 }

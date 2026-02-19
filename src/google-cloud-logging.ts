@@ -17,6 +17,14 @@ export const GoogleCloudLogging: Formatter = {
       severity: severityMap[record.level],
       ...record.context,
     }
+    if (record.trace) {
+      entry['logging.googleapis.com/trace'] = record.trace.traceId
+      entry['logging.googleapis.com/spanId'] = record.trace.spanId
+      if (record.trace.traceFlags !== undefined) {
+        entry['logging.googleapis.com/trace_sampled'] =
+          (record.trace.traceFlags & 1) === 1
+      }
+    }
     return entry
   },
 }

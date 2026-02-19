@@ -83,6 +83,58 @@ console.log('plain text') // → structured JSON
 originalConsole.log('bypass interception')
 ```
 
+## OpenTelemetry
+
+The logger supports automatic trace context injection. Supply a `traceContext` getter that returns the active span's trace/span IDs — the formatter maps them to platform-specific fields automatically.
+
+### With `@opentelemetry/api`
+
+```typescript
+import { trace } from '@opentelemetry/api'
+import { Logger } from 'jsonl-logger'
+
+const logger = new Logger({}, {
+  traceContext: () => {
+    const span = trace.getActiveSpan()
+    if (!span) return undefined
+    const { traceId, spanId, traceFlags } = span.spanContext()
+    return { traceId, spanId, traceFlags }
+  },
+})
+
+logger.info('request handled', { path: '/api' })
+// GCL output includes "logging.googleapis.com/trace", "logging.googleapis.com/spanId", etc.
+// VictoriaLogs output includes "trace_id", "span_id", etc.
+```
+
+### Custom trace context
+
+```typescript
+const logger = new Logger({}, {
+  traceContext: () => ({
+    traceId: myTracer.currentTraceId(),
+    spanId: myTracer.currentSpanId(),
+  }),
+})
+```
+
+The `traceContext` option is also available on `intercept()`:
+
+```typescript
+import { intercept } from 'jsonl-logger/intercept'
+
+intercept({
+  traceContext: () => {
+    const span = trace.getActiveSpan()
+    if (!span) return undefined
+    const { traceId, spanId, traceFlags } = span.spanContext()
+    return { traceId, spanId, traceFlags }
+  },
+})
+```
+
+Child loggers inherit the `traceContext` getter from their parent.
+
 ## Next.js Integration
 
 The preload module reads `LOG_FORMAT` and only activates when it's set. Safe to include unconditionally — it's a no-op without `LOG_FORMAT`.
@@ -188,7 +240,7 @@ The logger auto-detects the runtime and uses the fastest available I/O:
 
 | Subpath | Export |
 |---------|--------|
-| `jsonl-logger` | `Logger`, `logger`, `errorInfo()`, types (`ErrorInfo`, `LogRecord`, etc.) |
+| `jsonl-logger` | `Logger`, `logger`, `errorInfo()`, types (`ErrorInfo`, `LogRecord`, `TraceContext`, etc.) |
 | `jsonl-logger/google-cloud-logging` | `GoogleCloudLogging` formatter |
 | `jsonl-logger/victoria-logs` | `VictoriaLogs` formatter |
 | `jsonl-logger/intercept` | `intercept()`, `originalConsole` |
