@@ -19,20 +19,23 @@ logger.info('Server started', { port: 3000 })
 logger.error('Request failed', { path: '/api' }, new Error('timeout'))
 ```
 
+Without `LOG_FORMAT`, the logger outputs colored plain text — ideal for local development. Set `LOG_FORMAT` to enable structured JSON for production (see Formatters below).
+
 ## Formatters
 
-Two built-in formatters for popular log backends:
+Set `LOG_FORMAT` to enable JSON output with a specific formatter:
 
-### Google Cloud Logging (default)
+### Google Cloud Logging
+
+```bash
+LOG_FORMAT=google-cloud-logging bun run server.ts
+```
 
 ```typescript
-import { logger } from 'jsonl-logger'
 // Output: {"message":"...","timestamp":"...","severity":"INFO",...}
 ```
 
 ### VictoriaLogs
-
-Set `LOG_FORMAT` to enable VictoriaLogs formatting:
 
 ```bash
 LOG_FORMAT=victoria-logs bun run server.ts
