@@ -184,4 +184,18 @@ describe('intercept', () => {
 
     expect(spy.records[0].context.userId).toBe('42')
   })
+
+  test('extracts error cause chain', async () => {
+    const spy = await setupIntercept()
+
+    const inner = new Error('root')
+    const outer = new Error('wrapper', { cause: inner })
+    console.error('with cause', outer)
+
+    expect(spy.records[0].error?.name).toBe('Error')
+    expect(spy.records[0].error?.message).toBe('wrapper')
+    expect(spy.records[0].error?.cause?.name).toBe('Error')
+    expect(spy.records[0].error?.cause?.message).toBe('root')
+    expect(spy.records[0].error?.cause?.stack).toBeDefined()
+  })
 })

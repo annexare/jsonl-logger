@@ -54,6 +54,35 @@ describe('VictoriaLogs formatter', () => {
     expect(out['error.stack']).toBeUndefined()
   })
 
+  test('includes error.cause fields', () => {
+    const out = VictoriaLogs.format(
+      record({
+        error: {
+          name: 'Error',
+          message: 'outer',
+          stack: 'at foo:1',
+          cause: {
+            name: 'RangeError',
+            message: 'inner',
+            stack: 'at baz:3',
+          },
+        },
+      }),
+    )
+    expect(out['error.cause.name']).toBe('RangeError')
+    expect(out['error.cause.message']).toBe('inner')
+    expect(out['error.cause.stack']).toBe('at baz:3')
+  })
+
+  test('omits error.cause fields when no cause', () => {
+    const out = VictoriaLogs.format(
+      record({
+        error: { name: 'Error', message: 'no cause' },
+      }),
+    )
+    expect(out['error.cause.name']).toBeUndefined()
+  })
+
   test('all log levels are passed through', () => {
     for (const level of ['debug', 'info', 'warn', 'error', 'fatal'] as const) {
       const out = VictoriaLogs.format(record({ level }))

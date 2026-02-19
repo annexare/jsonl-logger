@@ -1,5 +1,6 @@
 import { GoogleCloudLogging } from './google-cloud-logging'
 import type {
+  ErrorInfo,
   Formatter,
   FormatterName,
   LogContext,
@@ -17,6 +18,7 @@ import {
 import { VictoriaLogs } from './victoria-logs'
 
 export type {
+  ErrorInfo,
   Formatter,
   FormatterName,
   InterceptOptions,
@@ -45,6 +47,15 @@ const isErrorLevel: Record<LogLevel, boolean> = {
   warn: false,
   error: true,
   fatal: true,
+}
+
+export function errorInfo(err: Error): ErrorInfo {
+  return {
+    name: err.name,
+    message: err.message,
+    stack: err.stack,
+    ...(err.cause instanceof Error ? { cause: errorInfo(err.cause) } : {}),
+  }
 }
 
 export class Logger {
@@ -89,7 +100,7 @@ export class Logger {
     }
 
     if (err) {
-      record.error = { name: err.name, message: err.message, stack: err.stack }
+      record.error = errorInfo(err)
     }
 
     if (this.json) {
@@ -118,9 +129,18 @@ export class Logger {
     const ctx = record.context
     const metaStr = Object.keys(ctx).length > 0 ? ` ${JSON.stringify(ctx)}` : ''
 
-    const errStr = record.error
-      ? ` [${record.error.name}: ${record.error.message}]`
-      : ''
+    let errStr = ''
+    if (record.error) {
+      errStr = record.error.stack
+        ? `\n${record.error.stack}`
+        : `\n  ${record.error.name}: ${record.error.message}`
+      if (record.error.cause) {
+        const cause = record.error.cause
+        errStr += cause.stack
+          ? `\nCaused by: ${cause.stack}`
+          : `\nCaused by: ${cause.name}: ${cause.message}`
+      }
+    }
 
     const output = `${color}${time} ${levelStr}${reset} ${record.message}${metaStr}${errStr}`
 

@@ -1,4 +1,5 @@
 import { GoogleCloudLogging } from './google-cloud-logging'
+import { errorInfo } from './index'
 import type { Formatter, InterceptOptions, LogLevel } from './types'
 import { logLevelValues, stripAnsi, write } from './types'
 
@@ -103,9 +104,7 @@ function createOverride(
       message,
       timestamp: new Date().toISOString(),
       context: meta || {},
-      error: error
-        ? { name: error.name, message: error.message, stack: error.stack }
-        : undefined,
+      error: error ? errorInfo(error) : undefined,
     }
 
     write(JSON.stringify(formatter.format(record)), isErrorLevel[level])

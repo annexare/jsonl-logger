@@ -2,12 +2,19 @@ export type LogLevel = 'debug' | 'info' | 'warn' | 'error' | 'fatal'
 
 export type LogContext = Record<string, unknown>
 
+export type ErrorInfo = {
+  name: string
+  message: string
+  stack?: string
+  cause?: ErrorInfo
+}
+
 export type LogRecord = {
   level: LogLevel
   message: string
   timestamp: string
   context: LogContext
-  error?: { name: string; message: string; stack?: string }
+  error?: ErrorInfo
 }
 
 export type Formatter = {
