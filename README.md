@@ -1,6 +1,6 @@
 # jsonl-logger
 
-Lightweight JSON Lines logger with pluggable formatters. Modern ESM-only, zero dependencies, Bun-first, works on Node.js and Deno.
+Lightweight JSON Lines (JSONL) logger with pluggable formatters. Modern ESM-only, zero dependencies, Bun-first, works on Node.js and Deno.
 
 ## Install
 
@@ -32,11 +32,13 @@ import { logger } from 'jsonl-logger'
 
 ### VictoriaLogs
 
-```typescript
-import { VictoriaLogs } from 'jsonl-logger/victoria-logs'
-import { Logger } from 'jsonl-logger'
+Set `LOG_FORMAT` to enable VictoriaLogs formatting:
 
-const logger = new Logger(undefined, { json: true, formatter: VictoriaLogs })
+```bash
+LOG_FORMAT=victoria-logs bun run server.ts
+```
+
+```typescript
 // Output: {"_msg":"...","_time":"...","level":"info",...}
 ```
 
@@ -82,12 +84,10 @@ originalConsole.log('bypass interception')
 Auto-intercept from first line using `--preload`:
 
 ```bash
-bun --preload jsonl-logger/preload server.js
+LOG_FORMAT=victoria-logs bun --preload jsonl-logger/preload server.js
 ```
 
-Environment variables:
-- `LOG_FORMAT` — `google-cloud-logging` (default) or `victoria-logs`
-- `LOG_LEVEL` — `debug`, `info` (default), `warn`, `error`, `fatal`
+The preload module reads `LOG_FORMAT` and only activates when it's set. Safe to include unconditionally — it's a no-op without `LOG_FORMAT`.
 
 ## Child Loggers
 
@@ -101,9 +101,8 @@ requestLogger.info('Processing request')
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `JSON_LOGS` | `false` | Enable JSON output (`true` for production) |
-| `LOG_LEVEL` | `info`/`debug` | Minimum log level (defaults to `info` when JSON, `debug` otherwise) |
-| `LOG_FORMAT` | `google-cloud-logging` | Formatter for preload module (`google-cloud-logging` or `victoria-logs`) |
+| `LOG_FORMAT` | _(unset)_ | Set to enable JSON: `google-cloud-logging` or `victoria-logs` |
+| `LOG_LEVEL` | `info`/`debug` | Minimum log level (`info` when JSON, `debug` otherwise) |
 
 ## Runtime Detection
 

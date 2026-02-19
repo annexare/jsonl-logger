@@ -23,6 +23,9 @@ export type LoggerOptions = {
 
 export type FormatterName = 'google-cloud-logging' | 'victoria-logs'
 
+export const defaultFormat = process.env.LOG_FORMAT as FormatterName | undefined
+export const isJsonMode = !!defaultFormat
+
 export type InterceptOptions = {
   formatter?: Formatter
   filter?: (level: LogLevel, message: string) => boolean
