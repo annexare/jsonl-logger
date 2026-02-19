@@ -9,11 +9,6 @@ export const VictoriaLogs: Formatter = {
       level: record.level,
       ...record.context,
     }
-    if (record.error) {
-      entry['error.name'] = record.error.name
-      entry['error.message'] = record.error.message
-      if (record.error.stack) entry['error.stack'] = record.error.stack
-    }
     return entry
   },
 }

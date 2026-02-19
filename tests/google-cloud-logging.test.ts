@@ -46,21 +46,6 @@ describe('GoogleCloudLogging formatter', () => {
     expect(out.requestId).toBe('abc')
   })
 
-  test('includes error fields with dot notation', () => {
-    const out = GoogleCloudLogging.format(
-      record({
-        error: {
-          name: 'RangeError',
-          message: 'out of bounds',
-          stack: 'at bar:2',
-        },
-      }),
-    )
-    expect(out['error.name']).toBe('RangeError')
-    expect(out['error.message']).toBe('out of bounds')
-    expect(out['error.stack']).toBe('at bar:2')
-  })
-
   test('does not include _msg or _time fields', () => {
     const out = GoogleCloudLogging.format(record())
     expect(out._msg).toBeUndefined()

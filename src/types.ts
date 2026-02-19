@@ -2,12 +2,19 @@ export type LogLevel = 'debug' | 'info' | 'warn' | 'error' | 'fatal'
 
 export type LogContext = Record<string, unknown>
 
+export type ErrorInfo = {
+  name: string
+  message: string
+  stack?: string
+  cause?: ErrorInfo
+}
+
 export type LogRecord = {
   level: LogLevel
   message: string
   timestamp: string
   context: LogContext
-  error?: { name: string; message: string; stack?: string }
+  error?: ErrorInfo
 }
 
 export type Formatter = {
@@ -45,6 +52,17 @@ const ansiPattern = /\x1b\[[0-9;]*m/g
 
 export function stripAnsi(str: string): string {
   return str.replace(ansiPattern, '')
+}
+
+export function flattenError(
+  entry: Record<string, unknown>,
+  error: ErrorInfo,
+  prefix = 'error',
+): void {
+  entry[`${prefix}.name`] = error.name
+  entry[`${prefix}.message`] = error.message
+  if (error.stack) entry[`${prefix}.stack`] = error.stack
+  if (error.cause) flattenError(entry, error.cause, `${prefix}.cause`)
 }
 
 /**

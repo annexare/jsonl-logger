@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, mock, test } from 'bun:test'
 
-import { Logger } from '../src/index'
+import { errorInfo, Logger } from '../src/index'
 import { VictoriaLogs } from '../src/victoria-logs'
 
 let output: { stdout: string[]; stderr: string[] }
@@ -251,5 +251,178 @@ describe('child logger', () => {
     const parsed = JSON.parse(output.stdout[0])
     expect(parsed._msg).toBe('Test')
     expect(parsed.level).toBe('info')
+  })
+})
+
+describe('errorInfo()', () => {
+  test('extracts name, message, stack', () => {
+    const err = new Error('boom')
+    const info = errorInfo(err)
+    expect(info.name).toBe('Error')
+    expect(info.message).toBe('boom')
+    expect(info.stack).toBeDefined()
+    expect(info.cause).toBeUndefined()
+  })
+
+  test('extracts cause chain', () => {
+    const inner = new Error('root cause')
+    const outer = new Error('wrapper', { cause: inner })
+    const info = errorInfo(outer)
+    expect(info.name).toBe('Error')
+    expect(info.message).toBe('wrapper')
+    expect(info.cause).toBeDefined()
+    expect(info.cause!.name).toBe('Error')
+    expect(info.cause!.message).toBe('root cause')
+    expect(info.cause!.stack).toBeDefined()
+    expect(info.cause!.cause).toBeUndefined()
+  })
+
+  test('ignores non-Error cause', () => {
+    const err = new Error('with string cause', { cause: 'not an error' })
+    const info = errorInfo(err)
+    expect(info.cause).toBeUndefined()
+  })
+
+  test('extracts deep cause chain (3 levels)', () => {
+    const c = new Error('root')
+    const b = new Error('middle', { cause: c })
+    const a = new Error('top', { cause: b })
+    const info = errorInfo(a)
+    expect(info.message).toBe('top')
+    expect(info.cause!.message).toBe('middle')
+    expect(info.cause!.cause!.message).toBe('root')
+    expect(info.cause!.cause!.cause).toBeUndefined()
+  })
+
+  test('handles circular cause chain without crashing', () => {
+    const a = new Error('A')
+    const b = new Error('B', { cause: a })
+    // Create cycle: a.cause -> b -> a -> ...
+    a.cause = b
+    const info = errorInfo(a)
+    expect(info.name).toBe('Error')
+    expect(info.message).toBe('A')
+    expect(info.cause).toBeDefined()
+    expect(info.cause!.message).toBe('B')
+    // Cycle broken — b's cause (a) was already visited
+    expect(info.cause!.cause).toBeUndefined()
+  })
+})
+
+describe('JSON mode error.cause', () => {
+  test('error() includes cause in JSON output', () => {
+    const logger = new Logger(undefined, { json: true })
+    const inner = new Error('db connection failed')
+    const outer = new Error('query failed', { cause: inner })
+    logger.error('Operation failed', undefined, outer)
+
+    const parsed = JSON.parse(output.stderr[0])
+    expect(parsed['error.name']).toBe('Error')
+    expect(parsed['error.message']).toBe('query failed')
+    expect(parsed['error.cause.name']).toBe('Error')
+    expect(parsed['error.cause.message']).toBe('db connection failed')
+    expect(parsed['error.cause.stack']).toBeDefined()
+  })
+
+  test('flattens 3-level cause chain', () => {
+    const logger = new Logger(undefined, { json: true })
+    const c = new Error('root')
+    const b = new Error('middle', { cause: c })
+    const a = new Error('top', { cause: b })
+    logger.error('deep', undefined, a)
+
+    const parsed = JSON.parse(output.stderr[0])
+    expect(parsed['error.message']).toBe('top')
+    expect(parsed['error.cause.message']).toBe('middle')
+    expect(parsed['error.cause.cause.message']).toBe('root')
+    expect(parsed['error.cause.cause.cause.name']).toBeUndefined()
+  })
+
+  test('includes cause fields with VictoriaLogs formatter', () => {
+    const logger = new Logger(undefined, { json: true, formatter: VictoriaLogs })
+    const inner = new Error('db failed')
+    const outer = new Error('query failed', { cause: inner })
+    logger.error('Op failed', undefined, outer)
+
+    const parsed = JSON.parse(output.stderr[0])
+    expect(parsed._msg).toBe('Op failed')
+    expect(parsed['error.name']).toBe('Error')
+    expect(parsed['error.message']).toBe('query failed')
+    expect(parsed['error.cause.name']).toBe('Error')
+    expect(parsed['error.cause.message']).toBe('db failed')
+  })
+
+  test('error without cause omits cause fields', () => {
+    const logger = new Logger(undefined, { json: true })
+    logger.error('simple error', undefined, new Error('oops'))
+
+    const parsed = JSON.parse(output.stderr[0])
+    expect(parsed['error.name']).toBe('Error')
+    expect(parsed['error.cause.name']).toBeUndefined()
+  })
+})
+
+describe('plain mode stack traces', () => {
+  let consoleSpy: Record<string, ReturnType<typeof mock>>
+
+  beforeEach(() => {
+    consoleSpy = {
+      log: mock(() => {}),
+      debug: mock(() => {}),
+      warn: mock(() => {}),
+      error: mock(() => {}),
+    }
+    console.log = consoleSpy.log
+    console.debug = consoleSpy.debug
+    console.warn = consoleSpy.warn
+    console.error = consoleSpy.error
+  })
+
+  test('error() shows stack trace in plain mode', () => {
+    const logger = new Logger(undefined, { json: false })
+    const err = new Error('something broke')
+    logger.error('Handler failed', undefined, err)
+
+    const out = consoleSpy.error.mock.calls[0]?.[0] as string
+    expect(out).toContain('Handler failed')
+    expect(out).toContain('Error: something broke')
+    expect(out).toContain('at ')
+  })
+
+  test('error() shows cause chain in plain mode', () => {
+    const logger = new Logger(undefined, { json: false })
+    const inner = new Error('ECONNREFUSED')
+    const outer = new Error('fetch failed', { cause: inner })
+    logger.error('API error', undefined, outer)
+
+    const out = consoleSpy.error.mock.calls[0]?.[0] as string
+    expect(out).toContain('API error')
+    expect(out).toContain('Error: fetch failed')
+    expect(out).toContain('Caused by:')
+    expect(out).toContain('ECONNREFUSED')
+  })
+
+  test('shows full cause chain (3 levels) in plain mode', () => {
+    const logger = new Logger(undefined, { json: false })
+    const c = new Error('root')
+    const b = new Error('middle', { cause: c })
+    const a = new Error('top', { cause: b })
+    logger.error('Deep error', undefined, a)
+
+    const out = consoleSpy.error.mock.calls[0]?.[0] as string
+    expect(out).toContain('Error: top')
+    expect(out).toContain('Caused by:')
+    expect(out).toContain('middle')
+    expect(out).toContain('root')
+  })
+
+  test('error without stack shows name: message fallback', () => {
+    const logger = new Logger(undefined, { json: false })
+    const err = new Error('no stack')
+    err.stack = undefined
+    logger.error('Broken', undefined, err)
+
+    const out = consoleSpy.error.mock.calls[0]?.[0] as string
+    expect(out).toContain('Error: no stack')
   })
 })

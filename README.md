@@ -127,6 +127,49 @@ requestLogger.info('Processing request')
 // All entries include requestId and service
 ```
 
+## Error Handling
+
+Errors passed to `error()` / `fatal()` capture the full stack trace and `error.cause` chain:
+
+```typescript
+const inner = new Error('ECONNREFUSED')
+const outer = new Error('fetch failed', { cause: inner })
+logger.error('API call failed', { endpoint: '/users' }, outer)
+```
+
+**Dev mode** (no `LOG_FORMAT`) — colored plain text with full stack:
+```
+18:42:05 ERROR API call failed {"endpoint":"/users"}
+Error: fetch failed
+    at handler (/app/api/route.ts:42:5)
+Caused by: Error: ECONNREFUSED
+    at connect (/app/db.ts:10:3)
+```
+
+**Production** (`LOG_FORMAT` set) — structured JSON with `error.*` and `error.cause.*` fields:
+```json
+{
+  "message": "API call failed",
+  "severity": "ERROR",
+  "endpoint": "/users",
+  "error.name": "Error",
+  "error.message": "fetch failed",
+  "error.stack": "Error: fetch failed\n    at handler ...",
+  "error.cause.name": "Error",
+  "error.cause.message": "ECONNREFUSED",
+  "error.cause.stack": "Error: ECONNREFUSED\n    at connect ..."
+}
+```
+
+The `errorInfo()` helper is exported for use in custom formatters:
+
+```typescript
+import { errorInfo } from 'jsonl-logger'
+
+const info = errorInfo(caughtError)
+// { name, message, stack, cause?: { name, message, stack, cause?: ... } }
+```
+
 ## Environment Variables
 
 | Variable | Default | Description |
@@ -145,7 +188,7 @@ The logger auto-detects the runtime and uses the fastest available I/O:
 
 | Subpath | Export |
 |---------|--------|
-| `jsonl-logger` | `Logger`, `logger`, types |
+| `jsonl-logger` | `Logger`, `logger`, `errorInfo()`, types (`ErrorInfo`, `LogRecord`, etc.) |
 | `jsonl-logger/google-cloud-logging` | `GoogleCloudLogging` formatter |
 | `jsonl-logger/victoria-logs` | `VictoriaLogs` formatter |
 | `jsonl-logger/intercept` | `intercept()`, `originalConsole` |

@@ -1,5 +1,6 @@
 import { GoogleCloudLogging } from './google-cloud-logging'
 import type {
+  ErrorInfo,
   Formatter,
   FormatterName,
   LogContext,
@@ -9,6 +10,7 @@ import type {
 } from './types'
 import {
   defaultFormat,
+  flattenError,
   isJsonMode,
   logLevelValues,
   stripAnsi,
@@ -17,6 +19,7 @@ import {
 import { VictoriaLogs } from './victoria-logs'
 
 export type {
+  ErrorInfo,
   Formatter,
   FormatterName,
   InterceptOptions,
@@ -45,6 +48,22 @@ const isErrorLevel: Record<LogLevel, boolean> = {
   warn: false,
   error: true,
   fatal: true,
+}
+
+function extractErrorInfo(err: Error, visited: WeakSet<Error>): ErrorInfo {
+  visited.add(err)
+  return {
+    name: err.name,
+    message: err.message,
+    stack: err.stack,
+    ...(err.cause instanceof Error && !visited.has(err.cause)
+      ? { cause: extractErrorInfo(err.cause, visited) }
+      : {}),
+  }
+}
+
+export function errorInfo(err: Error): ErrorInfo {
+  return extractErrorInfo(err, new WeakSet())
 }
 
 export class Logger {
@@ -89,11 +108,13 @@ export class Logger {
     }
 
     if (err) {
-      record.error = { name: err.name, message: err.message, stack: err.stack }
+      record.error = errorInfo(err)
     }
 
     if (this.json) {
-      write(JSON.stringify(this.fmt.format(record)), isErrorLevel[level])
+      const formatted = this.fmt.format(record)
+      if (record.error) flattenError(formatted, record.error)
+      write(JSON.stringify(formatted), isErrorLevel[level])
     } else {
       this.logPlain(level, record)
     }
@@ -118,9 +139,22 @@ export class Logger {
     const ctx = record.context
     const metaStr = Object.keys(ctx).length > 0 ? ` ${JSON.stringify(ctx)}` : ''
 
-    const errStr = record.error
-      ? ` [${record.error.name}: ${record.error.message}]`
-      : ''
+    let errStr = ''
+    if (record.error) {
+      let current: ErrorInfo | undefined = record.error
+      let isRoot = true
+      while (current) {
+        if (current.stack) {
+          errStr += isRoot ? `\n${current.stack}` : `\nCaused by: ${current.stack}`
+        } else {
+          errStr += isRoot
+            ? `\n  ${current.name}: ${current.message}`
+            : `\nCaused by: ${current.name}: ${current.message}`
+        }
+        current = current.cause
+        isRoot = false
+      }
+    }
 
     const output = `${color}${time} ${levelStr}${reset} ${record.message}${metaStr}${errStr}`
 

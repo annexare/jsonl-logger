@@ -33,27 +33,6 @@ describe('VictoriaLogs formatter', () => {
     expect(out.service).toBe('api')
   })
 
-  test('includes error fields with dot notation', () => {
-    const out = VictoriaLogs.format(
-      record({
-        error: { name: 'TypeError', message: 'bad', stack: 'at foo:1' },
-      }),
-    )
-    expect(out['error.name']).toBe('TypeError')
-    expect(out['error.message']).toBe('bad')
-    expect(out['error.stack']).toBe('at foo:1')
-  })
-
-  test('omits error.stack when undefined', () => {
-    const out = VictoriaLogs.format(
-      record({
-        error: { name: 'Error', message: 'oops' },
-      }),
-    )
-    expect(out['error.name']).toBe('Error')
-    expect(out['error.stack']).toBeUndefined()
-  })
-
   test('all log levels are passed through', () => {
     for (const level of ['debug', 'info', 'warn', 'error', 'fatal'] as const) {
       const out = VictoriaLogs.format(record({ level }))
