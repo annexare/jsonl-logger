@@ -1,6 +1,8 @@
-# jsonl-logger
+# JSONL Logger
 
-Lightweight JSON Lines (JSONL) logger with pluggable formatters. Modern ESM-only, zero dependencies, Bun-first, works on Node.js and Deno.
+Lightweight JSON Lines logger with pluggable formatters (**Google Cloud Logging**, **VictoriaLogs**). Modern **ESM**-only, zero dependencies, Bun-first, works on Node.js and Deno.
+
+Next.js (and other hardcoded plain text logs) become JSON-only logging for systems where it is required.
 
 ## Install
 
@@ -29,20 +31,14 @@ Set `LOG_FORMAT` to enable JSON output with a specific formatter:
 
 ```bash
 LOG_FORMAT=google-cloud-logging bun run server.ts
-```
-
-```typescript
-// Output: {"message":"...","timestamp":"...","severity":"INFO",...}
+# Output: {"message":"...","timestamp":"...","severity":"INFO",...}
 ```
 
 ### VictoriaLogs
 
 ```bash
 LOG_FORMAT=victoria-logs bun run server.ts
-```
-
-```typescript
-// Output: {"_msg":"...","_time":"...","level":"info",...}
+# Output: {"_msg":"...","_time":"...","level":"info",...}
 ```
 
 ### Custom Formatter
