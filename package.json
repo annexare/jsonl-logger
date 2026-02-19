@@ -1,7 +1,7 @@
 {
   "name": "jsonl-logger",
   "version": "0.1.0",
-  "description": "Lightweight JSON Lines logger with pluggable formatters for VictoriaLogs, Google Cloud Logging, and more",
+  "description": "Lightweight ESM-only JSON Lines logger with pluggable formatters for Google Cloud Logging, VictoriaLogs, and more",
   "license": "MIT",
   "type": "module",
   "sideEffects": ["./src/preload.ts", "./dist/preload.js"],
@@ -11,15 +11,15 @@
       "import": "./dist/index.js",
       "types": "./dist/index.d.ts"
     },
-    "./victoria-logs": {
-      "bun": "./src/victoria-logs.ts",
-      "import": "./dist/victoria-logs.js",
-      "types": "./dist/victoria-logs.d.ts"
-    },
     "./google-cloud": {
       "bun": "./src/google-cloud.ts",
       "import": "./dist/google-cloud.js",
       "types": "./dist/google-cloud.d.ts"
+    },
+    "./victoria-logs": {
+      "bun": "./src/victoria-logs.ts",
+      "import": "./dist/victoria-logs.js",
+      "types": "./dist/victoria-logs.d.ts"
     },
     "./intercept": {
       "bun": "./src/intercept.ts",
@@ -35,7 +35,7 @@
   "files": ["dist", "src"],
   "scripts": {
     "build": "bun run build:js && bun run build:types",
-    "build:js": "bun build src/index.ts src/victoria-logs.ts src/google-cloud.ts src/intercept.ts src/preload.ts --outdir dist --target node --format esm --splitting --minify",
+    "build:js": "bun build src/index.ts src/google-cloud.ts src/victoria-logs.ts src/intercept.ts src/preload.ts --outdir dist --target node --format esm --splitting --minify",
     "build:types": "tsc --emitDeclarationOnly",
     "lint": "biome check --write .",
     "test": "bun test"
@@ -49,9 +49,10 @@
     "logger",
     "jsonl",
     "json-lines",
+    "esm",
     "structured-logging",
-    "victoria-logs",
     "google-cloud-logging",
+    "victoria-logs",
     "bun",
     "nextjs"
   ],
