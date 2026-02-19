@@ -1,6 +1,6 @@
 {
   "name": "jsonl-logger",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Lightweight ESM-only JSON Lines logger with pluggable formatters for Google Cloud Logging, VictoriaLogs, and more",
   "license": "MIT",
   "type": "module",
@@ -64,7 +64,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/annexare/jsonl-logger"
+    "url": "git+https://github.com/annexare/jsonl-logger.git"
   },
   "engines": {
     "node": ">=18"
