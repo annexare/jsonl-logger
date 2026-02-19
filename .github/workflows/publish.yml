@@ -7,14 +7,18 @@ on:
 jobs:
   publish:
     runs-on: ubuntu-latest
-    container: oven/bun:alpine
     permissions:
       contents: read
       id-token: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
+      - uses: oven-sh/setup-bun@v2
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 'lts/*'
+          registry-url: 'https://registry.npmjs.org'
       - run: bun install --frozen-lockfile
       - run: bun run build
-      - run: bunx npm publish --provenance --access public
+      - run: npm publish --provenance --access public
         env:
-          NPM_CONFIG_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
