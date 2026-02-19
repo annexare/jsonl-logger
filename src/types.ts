@@ -43,47 +43,33 @@ export function stripAnsi(str: string): string {
 }
 
 /**
- * Detect runtime and return the fastest available write functions.
- * Called once at module load — result is cached.
+ * Detect runtime once, resolve streams at call time.
+ * Stream lookup is deferred so tests/runtime can replace process.stdout.
  */
-function detectWriter(): (data: string, isError: boolean) => void {
-  // Bun: process.stdout.write exists and is fast
-  // Node.js: process.stdout.write exists
-  // Deno: Deno.stdout.writeSync exists
-  // Fallback: console.log/console.error
+const runtime: 'node' | 'deno' | 'browser' =
+  typeof process !== 'undefined' &&
+  process.stdout &&
+  typeof process.stdout.write === 'function'
+    ? 'node'
+    : // @ts-expect-error Deno global
+      typeof Deno !== 'undefined' && Deno.stdout
+      ? 'deno'
+      : 'browser'
 
-  if (
-    typeof process !== 'undefined' &&
-    process.stdout &&
-    typeof process.stdout.write === 'function'
-  ) {
-    const stdout = process.stdout
-    const stderr = process.stderr ?? stdout
-    return (data, isError) => {
-      if (isError) stderr.write(`${data}\n`)
-      else stdout.write(`${data}\n`)
-    }
-  }
+const denoEncoder = runtime === 'deno' ? new TextEncoder() : null
 
-  // @ts-expect-error Deno global
-  if (typeof Deno !== 'undefined' && Deno.stdout) {
-    const encoder = new TextEncoder()
+export function write(data: string, isError: boolean): void {
+  if (runtime === 'node') {
+    const stream = isError ? (process.stderr ?? process.stdout) : process.stdout
+    stream.write(`${data}\n`)
+  } else if (runtime === 'deno' && denoEncoder) {
+    const bytes = denoEncoder.encode(`${data}\n`)
     // @ts-expect-error Deno global
-    const stdout = Deno.stdout
+    if (isError) Deno.stderr.writeSync(bytes)
     // @ts-expect-error Deno global
-    const stderr = Deno.stderr ?? stdout
-    return (data, isError) => {
-      const bytes = encoder.encode(`${data}\n`)
-      if (isError) stderr.writeSync(bytes)
-      else stdout.writeSync(bytes)
-    }
-  }
-
-  // Browser / unknown runtime fallback
-  return (data, isError) => {
+    else Deno.stdout.writeSync(bytes)
+  } else {
     if (isError) console.error(data)
     else console.log(data)
   }
 }
-
-export const write = detectWriter()
