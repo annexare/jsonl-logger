@@ -82,15 +82,41 @@ console.log('plain text') // → structured JSON
 originalConsole.log('bypass interception')
 ```
 
-## Preload (Next.js Standalone)
-
-Auto-intercept from first line using `--preload`:
-
-```bash
-LOG_FORMAT=victoria-logs bun --preload jsonl-logger/preload server.js
-```
+## Next.js Integration
 
 The preload module reads `LOG_FORMAT` and only activates when it's set. Safe to include unconditionally — it's a no-op without `LOG_FORMAT`.
+
+### Instrumentation
+
+Next.js auto-detects `instrumentation.ts` at the project root. Use it to load the preload module on the server:
+
+```ts
+export async function register() {
+  if (process.env.NEXT_RUNTIME === 'nodejs' || typeof Bun !== 'undefined') {
+    await import('jsonl-logger/preload')
+  }
+}
+```
+
+### Dockerfile (Standalone with Bun)
+
+Next.js standalone output doesn't include all `node_modules`. Copy `jsonl-logger` explicitly from the build stage:
+
+```dockerfile
+COPY --from=build /app/node_modules/jsonl-logger ./node_modules/jsonl-logger
+
+ENV LOG_FORMAT=victoria-logs
+
+CMD ["bun", "--preload", "jsonl-logger/preload", "server.js"]
+```
+
+### Node.js
+
+For non-Bun deployments, use `--import` to preload:
+
+```bash
+LOG_FORMAT=google-cloud-logging node --import jsonl-logger/preload server.js
+```
 
 ## Child Loggers
 
