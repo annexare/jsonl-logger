@@ -29,9 +29,19 @@ export type Formatter = {
   messageKey: string
 }
 
+export type LabelStyle = 'icon' | 'none' | 'text'
+
+export const defaultLabelStyle: LabelStyle =
+  (process.env.LOG_LABELS as LabelStyle) === 'text'
+    ? 'text'
+    : (process.env.LOG_LABELS as LabelStyle) === 'none'
+      ? 'none'
+      : 'icon'
+
 export type LoggerOptions = {
   formatter?: Formatter
   json?: boolean
+  labels?: LabelStyle
   level?: LogLevel
   traceContext?: () => TraceContext | undefined
 }

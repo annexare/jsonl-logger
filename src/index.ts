@@ -3,6 +3,7 @@ import type {
   ErrorInfo,
   Formatter,
   FormatterName,
+  LabelStyle,
   LogContext,
   LoggerOptions,
   LogLevel,
@@ -11,6 +12,7 @@ import type {
 } from './types'
 import {
   defaultFormat,
+  defaultLabelStyle,
   flattenError,
   isJsonMode,
   logLevelValues,
@@ -24,6 +26,7 @@ export type {
   Formatter,
   FormatterName,
   InterceptOptions,
+  LabelStyle,
   LogContext,
   LoggerOptions,
   LogLevel,
@@ -68,17 +71,27 @@ export function errorInfo(err: Error): ErrorInfo {
   return extractErrorInfo(err, new WeakSet())
 }
 
+const levelIcons: Record<LogLevel, string> = {
+  debug: '◆',
+  info: '●',
+  warn: '▲',
+  error: '✖',
+  fatal: '‼',
+}
+
 export class Logger {
   private ctx: LogContext
   private min: number
   private json: boolean
   private fmt: Formatter
+  private labels: LabelStyle
   private tc?: () => TraceContext | undefined
 
   constructor(context?: LogContext, options?: LoggerOptions) {
     this.ctx = context || {}
     this.json = options?.json ?? defaultJson
     this.fmt = options?.formatter ?? defaultFormatter
+    this.labels = options?.labels ?? defaultLabelStyle
     this.tc = options?.traceContext
     const level: LogLevel = options?.level ?? defaultLevel
     this.min = logLevelValues[level] ?? logLevelValues.info
@@ -90,6 +103,7 @@ export class Logger {
       {
         json: this.json,
         formatter: this.fmt,
+        labels: this.labels,
         traceContext: this.tc,
       },
     )
@@ -97,11 +111,12 @@ export class Logger {
     return child
   }
 
-  private log(
+  private emit(
     level: LogLevel,
     message: string,
     meta?: LogContext,
     err?: Error,
+    neutral?: boolean,
   ): void {
     if (logLevelValues[level] < this.min) return
 
@@ -125,11 +140,15 @@ export class Logger {
       if (record.error) flattenError(formatted, record.error)
       write(JSON.stringify(formatted), isErrorLevel[level])
     } else {
-      this.logPlain(level, record)
+      this.logPlain(level, record, neutral)
     }
   }
 
-  private logPlain(level: LogLevel, record: LogRecord): void {
+  private logPlain(
+    level: LogLevel,
+    record: LogRecord,
+    neutral?: boolean,
+  ): void {
     const colors: Record<LogLevel, string> = {
       debug: '\x1b[36m',
       info: '\x1b[32m',
@@ -143,7 +162,15 @@ export class Logger {
     const time = new Date(record.timestamp).toLocaleTimeString('en-US', {
       hour12: false,
     })
-    const levelStr = level.toUpperCase().padEnd(5)
+
+    let levelStr: string
+    if (this.labels === 'none') {
+      levelStr = ' '
+    } else if (this.labels === 'text') {
+      levelStr = neutral ? '     ' : level.toUpperCase().padEnd(5)
+    } else {
+      levelStr = neutral ? ' ' : `${levelIcons[level]} `
+    }
 
     const ctx = record.context
     const metaStr = Object.keys(ctx).length > 0 ? ` ${JSON.stringify(ctx)}` : ''
@@ -185,24 +212,28 @@ export class Logger {
     }
   }
 
+  log(message: string, meta?: LogContext): void {
+    this.emit('info', message, meta, undefined, true)
+  }
+
   debug(message: string, meta?: LogContext): void {
-    this.log('debug', message, meta)
+    this.emit('debug', message, meta)
   }
 
   info(message: string, meta?: LogContext): void {
-    this.log('info', message, meta)
+    this.emit('info', message, meta)
   }
 
   warn(message: string, meta?: LogContext): void {
-    this.log('warn', message, meta)
+    this.emit('warn', message, meta)
   }
 
   error(message: string, meta?: LogContext, error?: Error): void {
-    this.log('error', message, meta, error)
+    this.emit('error', message, meta, error)
   }
 
   fatal(message: string, meta?: LogContext, error?: Error): void {
-    this.log('fatal', message, meta, error)
+    this.emit('fatal', message, meta, error)
   }
 }
 
