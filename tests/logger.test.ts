@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, mock, test } from 'bun:test'
 
 import { errorInfo, Logger } from '../src/index'
+import { stripAnsi } from '../src/types'
 import { VictoriaLogs } from '../src/victoria-logs'
 
 let output: { stdout: string[]; stderr: string[] }
@@ -483,5 +484,262 @@ describe('plain mode stack traces', () => {
 
     const out = consoleSpy.error.mock.calls[0]?.[0] as string
     expect(out).toContain('Error: no stack')
+  })
+})
+
+describe('icon labels (default)', () => {
+  let consoleSpy: Record<string, ReturnType<typeof mock>>
+
+  beforeEach(() => {
+    consoleSpy = {
+      log: mock(() => {}),
+      debug: mock(() => {}),
+      warn: mock(() => {}),
+      error: mock(() => {}),
+    }
+    console.log = consoleSpy.log
+    console.debug = consoleSpy.debug
+    console.warn = consoleSpy.warn
+    console.error = consoleSpy.error
+  })
+
+  test('info() shows ● icon', () => {
+    const logger = new Logger(undefined, { json: false })
+    logger.info('Hello')
+
+    const out = stripAnsi(consoleSpy.log.mock.calls[0]?.[0] as string)
+    expect(out).toContain('● ')
+    expect(out).toContain('Hello')
+  })
+
+  test('debug() shows ◆ icon', () => {
+    const logger = new Logger(undefined, { json: false, level: 'debug' })
+    logger.debug('Debug msg')
+
+    const out = stripAnsi(consoleSpy.debug.mock.calls[0]?.[0] as string)
+    expect(out).toContain('◆ ')
+  })
+
+  test('warn() shows ▲ icon', () => {
+    const logger = new Logger(undefined, { json: false })
+    logger.warn('Warn msg')
+
+    const out = stripAnsi(consoleSpy.warn.mock.calls[0]?.[0] as string)
+    expect(out).toContain('▲ ')
+  })
+
+  test('error() shows ✖ icon', () => {
+    const logger = new Logger(undefined, { json: false })
+    logger.error('Err msg')
+
+    const out = stripAnsi(consoleSpy.error.mock.calls[0]?.[0] as string)
+    expect(out).toContain('✖ ')
+  })
+
+  test('fatal() shows ‼ icon', () => {
+    const logger = new Logger(undefined, { json: false })
+    logger.fatal('Fatal msg')
+
+    const out = stripAnsi(consoleSpy.error.mock.calls[0]?.[0] as string)
+    expect(out).toContain('‼ ')
+  })
+})
+
+describe('text labels', () => {
+  let consoleSpy: Record<string, ReturnType<typeof mock>>
+
+  beforeEach(() => {
+    consoleSpy = {
+      log: mock(() => {}),
+      debug: mock(() => {}),
+      warn: mock(() => {}),
+      error: mock(() => {}),
+    }
+    console.log = consoleSpy.log
+    console.debug = consoleSpy.debug
+    console.warn = consoleSpy.warn
+    console.error = consoleSpy.error
+  })
+
+  test('info() shows INFO label', () => {
+    const logger = new Logger(undefined, { json: false, labels: 'text' })
+    logger.info('Hello')
+
+    const out = stripAnsi(consoleSpy.log.mock.calls[0]?.[0] as string)
+    expect(out).toContain('INFO ')
+    expect(out).toContain('Hello')
+  })
+
+  test('warn() shows WARN label', () => {
+    const logger = new Logger(undefined, { json: false, labels: 'text' })
+    logger.warn('Warning')
+
+    const out = stripAnsi(consoleSpy.warn.mock.calls[0]?.[0] as string)
+    expect(out).toContain('WARN ')
+  })
+
+  test('error() shows ERROR label', () => {
+    const logger = new Logger(undefined, { json: false, labels: 'text' })
+    logger.error('Error')
+
+    const out = stripAnsi(consoleSpy.error.mock.calls[0]?.[0] as string)
+    expect(out).toContain('ERROR')
+  })
+})
+
+describe('no labels (none)', () => {
+  let consoleSpy: Record<string, ReturnType<typeof mock>>
+
+  beforeEach(() => {
+    consoleSpy = {
+      log: mock(() => {}),
+      debug: mock(() => {}),
+      warn: mock(() => {}),
+      error: mock(() => {}),
+    }
+    console.log = consoleSpy.log
+    console.debug = consoleSpy.debug
+    console.warn = consoleSpy.warn
+    console.error = consoleSpy.error
+  })
+
+  test('info() shows no icon or text label', () => {
+    const logger = new Logger(undefined, { json: false, labels: 'none' })
+    logger.info('Hello')
+
+    const out = stripAnsi(consoleSpy.log.mock.calls[0]?.[0] as string)
+    expect(out).not.toContain('●')
+    expect(out).not.toContain('INFO')
+    expect(out).toContain('Hello')
+  })
+
+  test('.log() also shows no label', () => {
+    const logger = new Logger(undefined, { json: false, labels: 'none' })
+    logger.log('Neutral')
+
+    const out = stripAnsi(consoleSpy.log.mock.calls[0]?.[0] as string)
+    expect(out).not.toContain('●')
+    expect(out).not.toContain('INFO')
+    expect(out).toContain('Neutral')
+  })
+
+  test('child inherits none labels', () => {
+    const logger = new Logger(undefined, { json: false, labels: 'none' })
+    const child = logger.child({ service: 'api' })
+    child.warn('From child')
+
+    const out = stripAnsi(consoleSpy.warn.mock.calls[0]?.[0] as string)
+    expect(out).not.toContain('▲')
+    expect(out).not.toContain('WARN')
+    expect(out).toContain('From child')
+  })
+})
+
+describe('.log() method', () => {
+  let consoleSpy: Record<string, ReturnType<typeof mock>>
+
+  beforeEach(() => {
+    consoleSpy = {
+      log: mock(() => {}),
+      debug: mock(() => {}),
+      warn: mock(() => {}),
+      error: mock(() => {}),
+    }
+    console.log = consoleSpy.log
+    console.debug = consoleSpy.debug
+    console.warn = consoleSpy.warn
+    console.error = consoleSpy.error
+  })
+
+  test('shows 2-char pad (no icon) in icon mode', () => {
+    const logger = new Logger(undefined, { json: false })
+    logger.log('Neutral message')
+
+    const out = consoleSpy.log.mock.calls[0]?.[0] as string
+    const plain = stripAnsi(out)
+    // Should not contain any level icons
+    expect(plain).not.toContain('●')
+    expect(plain).not.toContain('◆')
+    expect(plain).not.toContain('▲')
+    expect(plain).not.toContain('✖')
+    expect(plain).not.toContain('‼')
+    expect(plain).toContain('Neutral message')
+    // After time there should be a single space (from format) + 1 space (levelStr) + reset + space + message
+    // The levelStr is ' ' (1 space) so the gap between time and message is narrower
+    expect(plain).toMatch(/\d{2}:\d{2}:\d{2}\s+Neutral message/)
+  })
+
+  test('shows 5-space pad in text mode', () => {
+    const logger = new Logger(undefined, { json: false, labels: 'text' })
+    logger.log('Neutral message')
+
+    const out = consoleSpy.log.mock.calls[0]?.[0] as string
+    const plain = stripAnsi(out)
+    expect(plain).not.toContain('INFO')
+    expect(plain).toContain('Neutral message')
+    // 5 spaces for the label area
+    expect(plain).toMatch(/\d{2}:\d{2}:\d{2}\s{5,}Neutral message/)
+  })
+
+  test('produces JSON with info severity in JSON mode', () => {
+    const logger = new Logger(undefined, { json: true })
+    logger.log('Neutral JSON')
+
+    expect(output.stdout.length).toBe(1)
+    const parsed = JSON.parse(output.stdout[0])
+    expect(parsed.message).toBe('Neutral JSON')
+    expect(parsed.severity).toBe('INFO')
+  })
+
+  test('includes metadata', () => {
+    const logger = new Logger(undefined, { json: true })
+    logger.log('With meta', { key: 'val' })
+
+    const parsed = JSON.parse(output.stdout[0])
+    expect(parsed.message).toBe('With meta')
+    expect(parsed.key).toBe('val')
+  })
+
+  test('is filtered by log level', () => {
+    const logger = new Logger(undefined, { json: true, level: 'warn' })
+    logger.log('Should not appear')
+
+    expect(output.stdout.length).toBe(0)
+  })
+})
+
+describe('child logger labels', () => {
+  let consoleSpy: Record<string, ReturnType<typeof mock>>
+
+  beforeEach(() => {
+    consoleSpy = {
+      log: mock(() => {}),
+      debug: mock(() => {}),
+      warn: mock(() => {}),
+      error: mock(() => {}),
+    }
+    console.log = consoleSpy.log
+    console.debug = consoleSpy.debug
+    console.warn = consoleSpy.warn
+    console.error = consoleSpy.error
+  })
+
+  test('child inherits text labels setting', () => {
+    const logger = new Logger(undefined, { json: false, labels: 'text' })
+    const child = logger.child({ service: 'api' })
+    child.info('From child')
+
+    const out = stripAnsi(consoleSpy.log.mock.calls[0]?.[0] as string)
+    expect(out).toContain('INFO ')
+    expect(out).toContain('From child')
+  })
+
+  test('child inherits icon labels setting', () => {
+    const logger = new Logger(undefined, { json: false, labels: 'icon' })
+    const child = logger.child({ service: 'api' })
+    child.warn('From child')
+
+    const out = stripAnsi(consoleSpy.warn.mock.calls[0]?.[0] as string)
+    expect(out).toContain('▲ ')
   })
 })
