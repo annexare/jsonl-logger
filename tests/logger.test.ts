@@ -487,6 +487,71 @@ describe('plain mode stack traces', () => {
   })
 })
 
+describe('plain mode spacing', () => {
+  let consoleSpy: Record<string, ReturnType<typeof mock>>
+
+  beforeEach(() => {
+    consoleSpy = {
+      log: mock(() => {}),
+      debug: mock(() => {}),
+      warn: mock(() => {}),
+      error: mock(() => {}),
+    }
+    console.log = consoleSpy.log
+    console.debug = consoleSpy.debug
+    console.warn = consoleSpy.warn
+    console.error = consoleSpy.error
+  })
+
+  function gap(spy: ReturnType<typeof mock>): string {
+    const out = stripAnsi(spy.mock.calls[0]?.[0] as string)
+    const m = out.match(/\d{2}:\d{2}:\d{2}(.*?)MSG/)
+    return m![1]
+  }
+
+  test('icon mode: 3-char gap (space + icon + space)', () => {
+    const logger = new Logger(undefined, { json: false, labels: 'icon' })
+    logger.info('MSG')
+    expect(gap(consoleSpy.log)).toHaveLength(3)
+    expect(gap(consoleSpy.log)).toMatch(/^ . $/)
+  })
+
+  test('icon mode neutral: 3-char gap (aligned with icon)', () => {
+    const logger = new Logger(undefined, { json: false, labels: 'icon' })
+    logger.log('MSG')
+    expect(gap(consoleSpy.log)).toHaveLength(3)
+    expect(gap(consoleSpy.log)).toBe('   ')
+  })
+
+  test('text mode: 7-char gap (space + 5-char label + space)', () => {
+    const logger = new Logger(undefined, { json: false, labels: 'text' })
+    logger.info('MSG')
+    expect(gap(consoleSpy.log)).toHaveLength(7)
+    expect(gap(consoleSpy.log)).toBe(' INFO  ')
+  })
+
+  test('text mode neutral: 7-char gap (aligned with text label)', () => {
+    const logger = new Logger(undefined, { json: false, labels: 'text' })
+    logger.log('MSG')
+    expect(gap(consoleSpy.log)).toHaveLength(7)
+    expect(gap(consoleSpy.log)).toBe('       ')
+  })
+
+  test('none mode: 1-char gap (single space)', () => {
+    const logger = new Logger(undefined, { json: false, labels: 'none' })
+    logger.info('MSG')
+    expect(gap(consoleSpy.log)).toHaveLength(1)
+    expect(gap(consoleSpy.log)).toBe(' ')
+  })
+
+  test('none mode neutral: 1-char gap (same as normal)', () => {
+    const logger = new Logger(undefined, { json: false, labels: 'none' })
+    logger.log('MSG')
+    expect(gap(consoleSpy.log)).toHaveLength(1)
+    expect(gap(consoleSpy.log)).toBe(' ')
+  })
+})
+
 describe('icon labels (default)', () => {
   let consoleSpy: Record<string, ReturnType<typeof mock>>
 

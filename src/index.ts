@@ -163,13 +163,13 @@ export class Logger {
       hour12: false,
     })
 
-    let levelStr: string
+    let label: string
     if (this.labels === 'none') {
-      levelStr = ' '
+      label = ''
     } else if (this.labels === 'text') {
-      levelStr = neutral ? '     ' : level.toUpperCase().padEnd(5)
+      label = neutral ? '      ' : ` ${level.toUpperCase().padEnd(5)}`
     } else {
-      levelStr = neutral ? ' ' : `${levelIcons[level]} `
+      label = neutral ? '  ' : ` ${levelIcons[level]}`
     }
 
     const ctx = record.context
@@ -194,7 +194,7 @@ export class Logger {
       }
     }
 
-    const output = `${color}${time} ${levelStr}${reset} ${record.message}${metaStr}${errStr}`
+    const output = `${color}${time}${label}${reset} ${record.message}${metaStr}${errStr}`
 
     switch (level) {
       case 'debug':

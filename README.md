@@ -23,10 +23,11 @@ npm install jsonl-logger
 import { logger } from 'jsonl-logger'
 
 logger.info('Server started', { port: 3000 })
+logger.log('Neutral message', { note: 'no level icon' })
 logger.error('Request failed', { path: '/api' }, new Error('timeout'))
 ```
 
-Without `LOG_FORMAT`, the logger outputs colored plain text — ideal for local development. Set `LOG_FORMAT` to enable structured JSON for production (see Formatters below).
+Without `LOG_FORMAT`, the logger outputs colored plain text with Unicode icons — ideal for local development. Set `LOG_FORMAT` to enable structured JSON for production (see Formatters below).
 
 ## Formatters
 
@@ -191,7 +192,7 @@ logger.error('API call failed', { endpoint: '/users' }, outer)
 
 **Dev mode** (no `LOG_FORMAT`) — colored plain text with full stack:
 ```
-18:42:05 ERROR API call failed {"endpoint":"/users"}
+18:42:05 ✖ API call failed {"endpoint":"/users"}
 Error: fetch failed
     at handler (/app/api/route.ts:42:5)
 Caused by: Error: ECONNREFUSED
