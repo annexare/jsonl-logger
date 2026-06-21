@@ -82,6 +82,17 @@ LOG_FORMAT=victoria-logs bun run server.ts
 # Output: {"_msg":"...","_time":"...","level":"info",...}
 ```
 
+### Elastic Common Schema (ECS)
+
+For the Elastic/ELK stack — ingested directly by Filebeat / Elastic Agent:
+
+```bash
+LOG_FORMAT=ecs bun run server.ts
+# Output: {"@timestamp":"...","log.level":"info","message":"...","ecs.version":"8.11.0",...}
+```
+
+Trace context maps to `trace.id` / `span.id`; errors map to `error.type` / `error.message` / `error.stack_trace` (with the cause chain under `error.cause.*`).
+
 ### Custom Formatter
 
 ```typescript
@@ -262,7 +273,7 @@ const info = errorInfo(caughtError)
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `LOG_FORMAT` | _(unset)_ | Set to enable JSON: `google-cloud-logging` or `victoria-logs`. Unset = colored plain text |
+| `LOG_FORMAT` | _(unset)_ | Set to enable JSON: `ecs`, `google-cloud-logging`, or `victoria-logs`. Unset = colored plain text |
 | `LOG_LEVEL` | `info`/`debug` | Minimum log level (`info` when JSON, `debug` otherwise) |
 | `LOG_LABELS` | `icon` | Plain-text label style: `icon`, `text`, or `none` (also via the `labels` option) |
 
@@ -278,6 +289,7 @@ The logger auto-detects the runtime and uses the fastest available I/O:
 | Subpath | Export |
 |---------|--------|
 | `jsonl-logger` | `Logger`, `logger`, `errorInfo()`, types (`ErrorInfo`, `LogRecord`, `TraceContext`, etc.) |
+| `jsonl-logger/elastic-common-schema` | `ElasticCommonSchema` formatter |
 | `jsonl-logger/google-cloud-logging` | `GoogleCloudLogging` formatter |
 | `jsonl-logger/victoria-logs` | `VictoriaLogs` formatter |
 | `jsonl-logger/intercept` | `intercept()`, `originalConsole` |
