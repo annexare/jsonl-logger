@@ -5,9 +5,9 @@
 
 # JSONL Logger
 
-Lightweight JSON Lines logger with pluggable formatters (**Google Cloud Logging**, **VictoriaLogs**). Modern **ESM**-only, zero dependencies, Bun-first, works on Node.js and Deno.
+Lightweight JSON Lines logger with pluggable formatters (**Google Cloud Logging**, **VictoriaLogs**, **Elastic/ECS**, **Datadog**, **Pino**). Modern **ESM**-only, zero dependencies, Bun-first, works on Node.js and Deno.
 
-Outputs **colored plain text** for local development and **structured JSON** (JSONL) for production — switched by a single `LOG_FORMAT` environment variable, with no code changes.
+Outputs **plain text** for local development — auto-colored on a TTY, plain when piped or redirected — and **structured JSON** (JSONL) for production, switched by a single `LOG_FORMAT` environment variable with no code changes.
 
 Next.js (and other hardcoded plain text logs) become JSON-only logging for systems where it is required.
 
@@ -338,7 +338,7 @@ The logger auto-detects the runtime and uses the fastest available I/O:
 
 | Subpath | Export |
 |---------|--------|
-| `jsonl-logger` | `Logger`, `logger`, `errorInfo()`, types (`ErrorInfo`, `LogRecord`, `TraceContext`, etc.) |
+| `jsonl-logger` | `Logger`, `logger`, `errorInfo()`, `flattenError()`, `logLevelValues`, `stripAnsi()`, types (`ErrorInfo`, `LogRecord`, `TraceContext`, etc.) |
 | `jsonl-logger/datadog` | `Datadog` formatter |
 | `jsonl-logger/elastic-common-schema` | `ElasticCommonSchema` formatter |
 | `jsonl-logger/google-cloud-logging` | `GoogleCloudLogging` formatter |
@@ -346,6 +346,16 @@ The logger auto-detects the runtime and uses the fastest available I/O:
 | `jsonl-logger/victoria-logs` | `VictoriaLogs` formatter |
 | `jsonl-logger/intercept` | `intercept()`, `originalConsole` |
 | `jsonl-logger/preload` | Side-effect auto-intercept |
+
+## Stability
+
+`1.0` marks a stable public API under [semantic versioning](https://semver.org). The stable surface is:
+
+- The package's **public exports** — the `Logger` class, `logger` singleton, formatter objects, `intercept()` / `originalConsole`, and the exported helpers (`errorInfo`, `flattenError`, `logLevelValues`, `stripAnsi`) and types (see [Exports](#exports)).
+- The **`Formatter`** contract (`{ messageKey, format(record) }`) and the `LogRecord` / `ErrorInfo` shapes.
+- The **`LOG_FORMAT`** values, **`LOG_LEVEL`**, **`LOG_LABELS`**, **`NO_COLOR`** / **`FORCE_COLOR`**, and the `Logger` / `intercept` options.
+
+Removing, renaming, or changing the behavior of any of the above bumps the major version. **Additive** changes — a new `LOG_FORMAT` value, a new optional option — are non-breaking and ship in minor releases.
 
 ## License
 
