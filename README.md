@@ -276,7 +276,7 @@ const info = errorInfo(caughtError)
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `LOG_FORMAT` | _(unset)_ | Set to enable JSON: `google-cloud-logging` or `victoria-logs`. Unset = colored plain text |
+| `LOG_FORMAT` | _(unset)_ | Set to enable JSON: `google-cloud-logging` or `victoria-logs`. Unset = plain text (colored on a TTY) |
 | `LOG_LEVEL` | `info`/`debug` | Minimum log level (`info` when JSON, `debug` otherwise) |
 | `LOG_LABELS` | `icon` | Plain-text label style: `icon`, `text`, or `none` (also via the `labels` option) |
 | `NO_COLOR` | _(unset)_ | Set to any value to disable plain-text color ([no-color.org](https://no-color.org)) |
