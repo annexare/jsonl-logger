@@ -7,7 +7,7 @@
 
 Lightweight JSON Lines logger with pluggable formatters (**Google Cloud Logging**, **VictoriaLogs**, **Elastic/ECS**, **Datadog**, **Pino**). Modern **ESM**-only, zero dependencies, Bun-first, works on Node.js and Deno.
 
-Outputs **colored plain text** for local development and **structured JSON** (JSONL) for production — switched by a single `LOG_FORMAT` environment variable, with no code changes.
+Outputs **plain text** for local development — auto-colored at a TTY, plain when piped or redirected — and **structured JSON** (JSONL) for production, switched by a single `LOG_FORMAT` environment variable with no code changes.
 
 Next.js (and other hardcoded plain text logs) become JSON-only logging for systems where it is required.
 
