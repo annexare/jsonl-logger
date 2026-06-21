@@ -15,7 +15,9 @@ jobs:
       - uses: oven-sh/setup-bun@v2
       - uses: actions/setup-node@v6
         with:
-          node-version: 'lts/*'
+          # Node 24 bundles npm >= 11.5.1, required for OIDC trusted publishing
+          # (no NPM_TOKEN secret needed — auth is via --provenance + id-token).
+          node-version: 24
           registry-url: 'https://registry.npmjs.org'
       - run: bun install --frozen-lockfile
       - run: bun run build
