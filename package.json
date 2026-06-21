@@ -1,7 +1,7 @@
 {
   "name": "jsonl-logger",
   "version": "1.0.0",
-  "description": "Lightweight ESM-only JSON Lines logger with pluggable formatters for Google Cloud Logging, VictoriaLogs, Elastic Common Schema (ECS), Datadog, and Pino",
+  "description": "Lightweight ESM-only JSON Lines logger with pluggable formatters for Google Cloud Logging, VictoriaLogs, Elastic Common Schema (ECS), Datadog, and Pino, with OpenTelemetry trace-context support",
   "license": "MIT",
   "type": "module",
   "sideEffects": [

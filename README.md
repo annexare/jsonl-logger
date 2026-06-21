@@ -351,6 +351,7 @@ The logger auto-detects the runtime and uses the fastest available I/O:
 
 `1.0` marks a stable public API under [semantic versioning](https://semver.org). The stable surface is:
 
+- The package's **public exports** — `Logger`, `logger`, `errorInfo()`, the formatter objects, `intercept()` / `originalConsole`, and the exported types (see [Exports](#exports)).
 - The **`Formatter`** contract (`{ messageKey, format(record) }`) and the `LogRecord` / `ErrorInfo` shapes.
 - The **`LOG_FORMAT`** values, **`LOG_LEVEL`**, **`LOG_LABELS`**, **`NO_COLOR`** / **`FORCE_COLOR`**, and the `Logger` / `intercept` options.
 
