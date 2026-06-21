@@ -47,7 +47,11 @@ export type LoggerOptions = {
   traceContext?: () => TraceContext | undefined
 }
 
-export type FormatterName = 'ecs' | 'google-cloud-logging' | 'victoria-logs'
+export type FormatterName =
+  | 'datadog'
+  | 'ecs'
+  | 'google-cloud-logging'
+  | 'victoria-logs'
 
 export const defaultFormat = process.env.LOG_FORMAT as FormatterName | undefined
 export const isJsonMode = !!defaultFormat

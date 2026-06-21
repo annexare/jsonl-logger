@@ -107,6 +107,19 @@ LOG_FORMAT=ecs bun run server.ts
 
 Trace context maps to `trace.id` / `span.id`; errors map to `error.type` / `error.message` / `error.stack_trace` (with the cause chain under `error.cause.*`).
 
+### Datadog
+
+For Datadog, collected from stdout by the Datadog Agent:
+
+```bash
+LOG_FORMAT=datadog bun run server.ts
+# Output: {"status":"info","message":"...","timestamp":"...","dd.trace_id":"...","dd.span_id":"..."}
+```
+
+Maps `status` (the Datadog severity), `message`, `timestamp`, and errors to `error.kind` / `error.message` / `error.stack` (cause chain under `error.cause.*`).
+
+**Trace correlation.** Trace and span IDs are written to `dd.trace_id` / `dd.span_id` **exactly as your `traceContext` getter returns them** — no conversion. Datadog APM log↔trace correlation expects IDs in Datadog's own format: [`dd-trace-js`](https://github.com/DataDog/dd-trace-js) already produces these, so its IDs correlate out of the box. If instead you wire an OpenTelemetry SDK (128-bit hex IDs), correlation may require aligning the ID format on both the log and trace sides.
+
 ### Custom Formatter
 
 ```typescript
@@ -305,6 +318,7 @@ The logger auto-detects the runtime and uses the fastest available I/O:
 | Subpath | Export |
 |---------|--------|
 | `jsonl-logger` | `Logger`, `logger`, `errorInfo()`, types (`ErrorInfo`, `LogRecord`, `TraceContext`, etc.) |
+| `jsonl-logger/datadog` | `Datadog` formatter |
 | `jsonl-logger/elastic-common-schema` | `ElasticCommonSchema` formatter |
 | `jsonl-logger/google-cloud-logging` | `GoogleCloudLogging` formatter |
 | `jsonl-logger/victoria-logs` | `VictoriaLogs` formatter |

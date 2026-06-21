@@ -1,3 +1,4 @@
+import { Datadog } from './datadog'
 import { ElasticCommonSchema } from './elastic-common-schema'
 import { GoogleCloudLogging } from './google-cloud-logging'
 import type { Formatter, FormatterName } from './types'
@@ -5,6 +6,7 @@ import { VictoriaLogs } from './victoria-logs'
 
 /** Registry of built-in JSON formatters, keyed by `LOG_FORMAT` value. */
 export const formatters: Record<FormatterName, Formatter> = {
+  datadog: Datadog,
   ecs: ElasticCommonSchema,
   'google-cloud-logging': GoogleCloudLogging,
   'victoria-logs': VictoriaLogs,
