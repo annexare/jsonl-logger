@@ -7,7 +7,7 @@
 
 Lightweight JSON Lines logger with pluggable formatters (**Google Cloud Logging**, **VictoriaLogs**, **Elastic/ECS**, **Datadog**, **Pino**). Modern **ESM**-only, zero dependencies, Bun-first, works on Node.js and Deno.
 
-Outputs **plain text** for local development — auto-colored at a TTY, plain when piped or redirected — and **structured JSON** (JSONL) for production, switched by a single `LOG_FORMAT` environment variable with no code changes.
+Outputs **plain text** for local development — auto-colored on a TTY, plain when piped or redirected — and **structured JSON** (JSONL) for production, switched by a single `LOG_FORMAT` environment variable with no code changes.
 
 Next.js (and other hardcoded plain text logs) become JSON-only logging for systems where it is required.
 
@@ -351,7 +351,7 @@ The logger auto-detects the runtime and uses the fastest available I/O:
 
 `1.0` marks a stable public API under [semantic versioning](https://semver.org). The stable surface is:
 
-- The package's **public exports** — `Logger`, `logger`, `errorInfo()`, the formatter objects, `intercept()` / `originalConsole`, and the exported types (see [Exports](#exports)).
+- The package's **public exports** — the `Logger` class, `logger` singleton, formatter objects, `intercept()` / `originalConsole`, and the exported helpers (`errorInfo`, `flattenError`, `logLevelValues`, `stripAnsi`) and types (see [Exports](#exports)).
 - The **`Formatter`** contract (`{ messageKey, format(record) }`) and the `LogRecord` / `ErrorInfo` shapes.
 - The **`LOG_FORMAT`** values, **`LOG_LEVEL`**, **`LOG_LABELS`**, **`NO_COLOR`** / **`FORCE_COLOR`**, and the `Logger` / `intercept` options.
 
