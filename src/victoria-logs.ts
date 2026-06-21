@@ -5,10 +5,10 @@ export const VictoriaLogs: Formatter = {
   messageKey: '_msg',
   format(record: LogRecord): Record<string, unknown> {
     const entry: Record<string, unknown> = {
+      ...record.context,
       _msg: record.message,
       _time: record.timestamp,
       level: record.level,
-      ...record.context,
     }
     if (record.trace) {
       entry.trace_id = record.trace.traceId
