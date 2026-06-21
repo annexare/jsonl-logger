@@ -23,11 +23,11 @@ export const ElasticCommonSchema: Formatter = {
   messageKey: 'message',
   format(record: LogRecord): Record<string, unknown> {
     const entry: Record<string, unknown> = {
+      ...record.context,
       '@timestamp': record.timestamp,
       'log.level': record.level,
       message: record.message,
       'ecs.version': ECS_VERSION,
-      ...record.context,
     }
     if (record.trace) {
       entry['trace.id'] = record.trace.traceId

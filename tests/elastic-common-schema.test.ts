@@ -34,6 +34,24 @@ describe('ElasticCommonSchema formatter', () => {
     expect(out.service).toBe('api')
   })
 
+  test('context cannot override canonical ECS fields', () => {
+    const out = ElasticCommonSchema.format(
+      record({
+        message: 'real',
+        context: {
+          message: 'spoofed',
+          'log.level': 'spoofed',
+          'ecs.version': 'spoofed',
+          userId: '42',
+        },
+      }),
+    )
+    expect(out.message).toBe('real')
+    expect(out['log.level']).toBe('info')
+    expect(out['ecs.version']).toBe('8.11.0')
+    expect(out.userId).toBe('42') // non-canonical context still passes through
+  })
+
   test('maps trace to trace.id and span.id', () => {
     const out = ElasticCommonSchema.format(
       record({
