@@ -12,6 +12,7 @@ import type {
   TraceContext,
 } from './types'
 import {
+  defaultColors,
   defaultFormat,
   defaultLabelStyle,
   isJsonMode,
@@ -80,12 +81,22 @@ const levelIcons: Record<LogLevel, string> = {
   fatal: '‼',
 }
 
+const levelColors: Record<LogLevel, string> = {
+  debug: '\x1b[36m',
+  info: '\x1b[32m',
+  warn: '\x1b[33m',
+  error: '\x1b[31m',
+  fatal: '\x1b[35m',
+}
+const resetColor = '\x1b[0m'
+
 export class Logger {
   private ctx: LogContext
   private min: number
   private json: boolean
   private fmt: Formatter
   private labels: LabelStyle
+  private colorize: boolean
   private tc?: () => TraceContext | undefined
 
   constructor(context?: LogContext, options?: LoggerOptions) {
@@ -93,6 +104,7 @@ export class Logger {
     this.json = options?.json ?? defaultJson
     this.fmt = options?.formatter ?? defaultFormatter
     this.labels = options?.labels ?? defaultLabelStyle
+    this.colorize = options?.colors ?? defaultColors
     this.tc = options?.traceContext
     const level: LogLevel = options?.level ?? defaultLevel
     this.min = logLevelValues[level] ?? logLevelValues.info
@@ -105,6 +117,7 @@ export class Logger {
         json: this.json,
         formatter: this.fmt,
         labels: this.labels,
+        colors: this.colorize,
         traceContext: this.tc,
       },
     )
@@ -149,15 +162,8 @@ export class Logger {
     record: LogRecord,
     neutral?: boolean,
   ): void {
-    const colors: Record<LogLevel, string> = {
-      debug: '\x1b[36m',
-      info: '\x1b[32m',
-      warn: '\x1b[33m',
-      error: '\x1b[31m',
-      fatal: '\x1b[35m',
-    }
-    const reset = '\x1b[0m'
-    const color = colors[level]
+    const color = this.colorize ? levelColors[level] : ''
+    const reset = this.colorize ? resetColor : ''
 
     const time = new Date(record.timestamp).toLocaleTimeString('en-US', {
       hour12: false,

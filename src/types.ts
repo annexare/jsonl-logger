@@ -39,6 +39,7 @@ export const defaultLabelStyle: LabelStyle =
       : 'icon'
 
 export type LoggerOptions = {
+  colors?: boolean
   formatter?: Formatter
   json?: boolean
   labels?: LabelStyle
@@ -50,6 +51,21 @@ export type FormatterName = 'ecs' | 'google-cloud-logging' | 'victoria-logs'
 
 export const defaultFormat = process.env.LOG_FORMAT as FormatterName | undefined
 export const isJsonMode = !!defaultFormat
+
+/**
+ * Resolve whether colored plain-text output should be used.
+ * Precedence: FORCE_COLOR > NO_COLOR > stdout TTY detection.
+ * `FORCE_COLOR=0`/`false` disables; any other value (incl. empty) enables.
+ * `NO_COLOR` (https://no-color.org) disables when present, regardless of value.
+ */
+export function detectColors(): boolean {
+  const force = process.env.FORCE_COLOR
+  if (force !== undefined) return force !== '0' && force !== 'false'
+  if (process.env.NO_COLOR !== undefined) return false
+  return Boolean(process.stdout?.isTTY)
+}
+
+export const defaultColors = detectColors()
 
 export type InterceptOptions = {
   formatter?: Formatter

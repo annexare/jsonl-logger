@@ -31,8 +31,9 @@ tests/
 
 ## Key Design Decisions
 
-- **`LOG_FORMAT` env var** enables JSON mode and selects the formatter. When unset, the logger outputs colored plain text (dev mode).
+- **`LOG_FORMAT` env var** enables JSON mode and selects the formatter. When unset, the logger outputs plain text (dev mode), colored when stdout is a TTY.
 - **`LOG_LABELS` env var** controls plain-mode label style: `icon` (default — `◆ ● ▲ ✖ ‼`), `text` (`DEBUG`, `INFO`, etc.), or `none`. Also settable via `labels` constructor option.
+- **Plain-text color** is auto-detected from `process.stdout.isTTY` (`detectColors()` in `types.ts`). Override via the `colors` constructor option or `NO_COLOR`/`FORCE_COLOR` env. Precedence: `colors` option > `FORCE_COLOR` > `NO_COLOR` > TTY.
 - **Preload is a no-op** without `LOG_FORMAT` — safe to include unconditionally.
 - **`write()`** bypasses `console.*` to avoid interception loops — writes directly to `process.stdout`/`process.stderr` (Node/Bun), `Deno.stdout`/`Deno.stderr`, or falls back to `console.log`/`console.error`.
 - **Intercept passthrough** — JSON strings that already contain the formatter's `messageKey` are written as-is, preventing double-formatting when `Logger` output goes through intercepted console.

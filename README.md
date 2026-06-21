@@ -33,7 +33,7 @@ logger.error('Request failed', { path: '/api' }, new Error('timeout'))
 
 The active mode is selected by the `LOG_FORMAT` environment variable — no code changes required:
 
-- **Plain text** (default, `LOG_FORMAT` unset) — colored, human-readable lines with a timestamp, level label, and inline context. Ideal for local development. `LOG_LEVEL` defaults to `debug`.
+- **Plain text** (default, `LOG_FORMAT` unset) — human-readable lines with a timestamp, level label, and inline context; colored when writing to a TTY. Ideal for local development. `LOG_LEVEL` defaults to `debug`.
 - **Structured JSON** (`LOG_FORMAT` set) — one JSON object per line (JSONL) shaped by the selected formatter. Ideal for production log pipelines. `LOG_LEVEL` defaults to `info`. See [Formatters](#formatters).
 
 Plain-text output for the Quick Start example above:
@@ -44,6 +44,20 @@ Plain-text output for the Quick Start example above:
 18:42:05 ✖ Request failed {"path":"/api"}
 Error: timeout
     at handler (/app/server.ts:12:9)
+```
+
+### Color
+
+Color is **auto-detected**: on when stdout is an interactive TTY, off when output is piped or redirected (e.g. to a log file or in CI). Override via the `colors` constructor option or the environment — precedence is `colors` option > `FORCE_COLOR` > `NO_COLOR` > TTY detection:
+
+- `colors: true | false` — explicit per-logger control, wins over everything below
+- `FORCE_COLOR` — set (to anything but `0`/`false`) to force color on
+- `NO_COLOR` — set (to any value) to force color off ([no-color.org](https://no-color.org))
+
+```typescript
+import { Logger } from 'jsonl-logger'
+
+const logger = new Logger({}, { colors: false }) // never colorize, regardless of TTY
 ```
 
 ### Label Styles
@@ -273,9 +287,11 @@ const info = errorInfo(caughtError)
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `LOG_FORMAT` | _(unset)_ | Set to enable JSON: `ecs`, `google-cloud-logging`, or `victoria-logs`. Unset = colored plain text |
+| `LOG_FORMAT` | _(unset)_ | Set to enable JSON — selects the formatter (see [Formatters](#formatters)). Unset = plain text (colored on a TTY) |
 | `LOG_LEVEL` | `info`/`debug` | Minimum log level (`info` when JSON, `debug` otherwise) |
 | `LOG_LABELS` | `icon` | Plain-text label style: `icon`, `text`, or `none` (also via the `labels` option) |
+| `NO_COLOR` | _(unset)_ | Set to any value to disable plain-text color ([no-color.org](https://no-color.org)) |
+| `FORCE_COLOR` | _(unset)_ | Force plain-text color on (`0`/`false` disables); overrides `NO_COLOR` |
 
 ## Runtime Detection
 
