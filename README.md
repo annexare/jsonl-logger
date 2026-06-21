@@ -349,10 +349,12 @@ The logger auto-detects the runtime and uses the fastest available I/O:
 
 ## Stability
 
-`1.0` marks a stable public API under [semantic versioning](https://semver.org). Breaking changes to the following bump the major version:
+`1.0` marks a stable public API under [semantic versioning](https://semver.org). The stable surface is:
 
 - The **`Formatter`** contract (`{ messageKey, format(record) }`) and the `LogRecord` / `ErrorInfo` shapes.
 - The **`LOG_FORMAT`** values, **`LOG_LEVEL`**, **`LOG_LABELS`**, **`NO_COLOR`** / **`FORCE_COLOR`**, and the `Logger` / `intercept` options.
+
+Removing, renaming, or changing the behavior of any of the above bumps the major version. **Additive** changes — a new `LOG_FORMAT` value, a new optional option — are non-breaking and ship in minor releases.
 
 ## License
 
