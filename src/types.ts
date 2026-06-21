@@ -51,6 +51,7 @@ export type FormatterName =
   | 'datadog'
   | 'ecs'
   | 'google-cloud-logging'
+  | 'pino'
   | 'victoria-logs'
 
 export const defaultFormat = process.env.LOG_FORMAT as FormatterName | undefined

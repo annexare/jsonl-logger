@@ -120,6 +120,27 @@ Maps `status` (the Datadog severity), `message`, `timestamp`, and errors to `err
 
 **Trace correlation.** Trace and span IDs are written to `dd.trace_id` / `dd.span_id` **exactly as your `traceContext` getter returns them** — no conversion. Datadog APM log↔trace correlation expects IDs in Datadog's own format: [`dd-trace-js`](https://github.com/DataDog/dd-trace-js) already produces these, so its IDs correlate out of the box. If instead you wire an OpenTelemetry SDK (128-bit hex IDs), correlation may require aligning the ID format on both the log and trace sides.
 
+### Pino
+
+Not a destination — emits the line shape the [Pino](https://github.com/pinojs/pino) ecosystem expects, so you can pipe output into `pino-pretty`, transports, or processors:
+
+```bash
+LOG_FORMAT=pino bun run server.ts | pino-pretty
+# Output: {"level":30,"time":1735689600000,"msg":"...","err":{"type":"...","message":"...","stack":"..."}}
+```
+
+Numeric `level` (`debug`=20 … `fatal`=60), epoch-millisecond `time`, `msg`, and errors nested under `err` (`type` / `message` / `stack`, cause chain under `err.cause`). Trace context maps to `trace_id` / `span_id` / `trace_flags` (matching `@opentelemetry/instrumentation-pino`).
+
+Pino's `pid` / `hostname` bindings are **not** added by the library — that keeps it free of a `node:os` import. Supply them (or any base fields) via the logger context if you want them on every line:
+
+```typescript
+import os from 'node:os'
+import { Logger } from 'jsonl-logger'
+
+// pid/hostname become base bindings emitted on every line (with LOG_FORMAT=pino)
+const logger = new Logger({ pid: process.pid, hostname: os.hostname() })
+```
+
 ### Custom Formatter
 
 ```typescript
@@ -321,6 +342,7 @@ The logger auto-detects the runtime and uses the fastest available I/O:
 | `jsonl-logger/datadog` | `Datadog` formatter |
 | `jsonl-logger/elastic-common-schema` | `ElasticCommonSchema` formatter |
 | `jsonl-logger/google-cloud-logging` | `GoogleCloudLogging` formatter |
+| `jsonl-logger/pino` | `Pino` formatter |
 | `jsonl-logger/victoria-logs` | `VictoriaLogs` formatter |
 | `jsonl-logger/intercept` | `intercept()`, `originalConsole` |
 | `jsonl-logger/preload` | Side-effect auto-intercept |
