@@ -33,6 +33,18 @@ describe('VictoriaLogs formatter', () => {
     expect(out.service).toBe('api')
   })
 
+  test('context cannot override canonical fields', () => {
+    const out = VictoriaLogs.format(
+      record({
+        message: 'real',
+        context: { _msg: 'spoofed', level: 'spoofed', userId: '42' },
+      }),
+    )
+    expect(out._msg).toBe('real')
+    expect(out.level).toBe('info')
+    expect(out.userId).toBe('42') // non-canonical context still passes through
+  })
+
   test('all log levels are passed through', () => {
     for (const level of ['debug', 'info', 'warn', 'error', 'fatal'] as const) {
       const out = VictoriaLogs.format(record({ level }))

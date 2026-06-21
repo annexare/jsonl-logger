@@ -1,9 +1,7 @@
-import { ElasticCommonSchema } from './elastic-common-schema'
-import { GoogleCloudLogging } from './google-cloud-logging'
+import { resolveFormatter } from './formatters'
 import type {
   ErrorInfo,
   Formatter,
-  FormatterName,
   LabelStyle,
   LogContext,
   LoggerOptions,
@@ -20,7 +18,6 @@ import {
   stripAnsi,
   write,
 } from './types'
-import { VictoriaLogs } from './victoria-logs'
 
 export type {
   ErrorInfo,
@@ -36,13 +33,7 @@ export type {
 } from './types'
 export { flattenError, logLevelValues, stripAnsi } from './types'
 
-const formatters: Record<FormatterName, Formatter> = {
-  ecs: ElasticCommonSchema,
-  'google-cloud-logging': GoogleCloudLogging,
-  'victoria-logs': VictoriaLogs,
-}
-const defaultFormatter =
-  (defaultFormat && formatters[defaultFormat]) || GoogleCloudLogging
+const defaultFormatter = resolveFormatter(defaultFormat)
 
 const defaultJson = isJsonMode
 const defaultLevel: LogLevel =

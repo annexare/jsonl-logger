@@ -46,6 +46,18 @@ describe('GoogleCloudLogging formatter', () => {
     expect(out.requestId).toBe('abc')
   })
 
+  test('context cannot override canonical fields', () => {
+    const out = GoogleCloudLogging.format(
+      record({
+        message: 'real',
+        context: { message: 'spoofed', severity: 'spoofed', requestId: 'abc' },
+      }),
+    )
+    expect(out.message).toBe('real')
+    expect(out.severity).toBe('INFO')
+    expect(out.requestId).toBe('abc') // non-canonical context still passes through
+  })
+
   test('does not include _msg or _time fields', () => {
     const out = GoogleCloudLogging.format(record())
     expect(out._msg).toBeUndefined()

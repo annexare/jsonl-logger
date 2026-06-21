@@ -13,10 +13,10 @@ export const GoogleCloudLogging: Formatter = {
   messageKey: 'message',
   format(record: LogRecord): Record<string, unknown> {
     const entry: Record<string, unknown> = {
+      ...record.context,
       message: record.message,
       timestamp: record.timestamp,
       severity: severityMap[record.level],
-      ...record.context,
     }
     if (record.trace) {
       entry['logging.googleapis.com/trace'] = record.trace.traceId
