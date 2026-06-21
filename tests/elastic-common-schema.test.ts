@@ -23,7 +23,7 @@ describe('ElasticCommonSchema formatter', () => {
     expect(out['@timestamp']).toBe('2025-01-01T00:00:00.000Z')
     expect(out['log.level']).toBe('info')
     expect(out.message).toBe('test')
-    expect(out['ecs.version']).toBeDefined()
+    expect(out['ecs.version']).toBe('8.11.0')
   })
 
   test('includes context fields at top level', () => {
