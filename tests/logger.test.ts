@@ -163,6 +163,22 @@ describe('Logger plain mode', () => {
     expect(out).not.toContain('\x1b[')
   })
 
+  test('plain mode never invokes the formatter (it is JSON-only)', () => {
+    // Plain text is the default output; the formatter (and the
+    // resolveFormatter() GoogleCloudLogging fallback) is used only in JSON mode.
+    const formatSpy = mock(() => ({ message: 'SHOULD-NOT-APPEAR' }))
+    const logger = new Logger(undefined, {
+      json: false,
+      formatter: { messageKey: 'message', format: formatSpy },
+    })
+    logger.info('plain message')
+
+    expect(formatSpy).not.toHaveBeenCalled()
+    const out = consoleSpy.log.mock.calls[0]?.[0] as string
+    expect(out).toContain('plain message')
+    expect(out).not.toContain('SHOULD-NOT-APPEAR')
+  })
+
   test('warn() uses console.warn', () => {
     const logger = new Logger(undefined, { json: false })
     logger.warn('Warning')
