@@ -62,7 +62,7 @@ import { Logger } from 'jsonl-logger'
 const logger = new Logger({}, { labels: 'text' }) // overrides LOG_LABELS
 ```
 
-The neutral `.log()` method always renders without an icon or label (timestamp + message only), so level-less lines stay visually distinct. In JSON mode these styles are ignored — labels apply to plain text only.
+The neutral `.log()` method always renders without an icon or text label — just blank padding where the label would sit — so level-less lines stay visually distinct from leveled ones (any `meta` context is still appended). In JSON mode these styles are ignored; labels apply to plain text only.
 
 ## Formatters
 
