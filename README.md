@@ -338,7 +338,7 @@ The logger auto-detects the runtime and uses the fastest available I/O:
 
 | Subpath | Export |
 |---------|--------|
-| `jsonl-logger` | `Logger`, `logger`, `errorInfo()`, types (`ErrorInfo`, `LogRecord`, `TraceContext`, etc.) |
+| `jsonl-logger` | `Logger`, `logger`, `errorInfo()`, `flattenError()`, `logLevelValues`, `stripAnsi()`, types (`ErrorInfo`, `LogRecord`, `TraceContext`, etc.) |
 | `jsonl-logger/datadog` | `Datadog` formatter |
 | `jsonl-logger/elastic-common-schema` | `ElasticCommonSchema` formatter |
 | `jsonl-logger/google-cloud-logging` | `GoogleCloudLogging` formatter |
