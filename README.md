@@ -7,6 +7,8 @@
 
 Lightweight JSON Lines logger with pluggable formatters (**Google Cloud Logging**, **VictoriaLogs**). Modern **ESM**-only, zero dependencies, Bun-first, works on Node.js and Deno.
 
+Outputs **colored plain text** for local development and **structured JSON** (JSONL) for production — switched by a single `LOG_FORMAT` environment variable, with no code changes.
+
 Next.js (and other hardcoded plain text logs) become JSON-only logging for systems where it is required.
 
 ## Install
@@ -27,7 +29,40 @@ logger.log('Neutral message', { note: 'no level icon' })
 logger.error('Request failed', { path: '/api' }, new Error('timeout'))
 ```
 
-Without `LOG_FORMAT`, the logger outputs colored plain text with Unicode icons — ideal for local development. Set `LOG_FORMAT` to enable structured JSON for production (see Formatters below).
+## Output Modes
+
+The active mode is selected by the `LOG_FORMAT` environment variable — no code changes required:
+
+- **Plain text** (default, `LOG_FORMAT` unset) — colored, human-readable lines with a timestamp, level label, and inline context. Ideal for local development. `LOG_LEVEL` defaults to `debug`.
+- **Structured JSON** (`LOG_FORMAT` set) — one JSON object per line (JSONL) shaped by the selected formatter. Ideal for production log pipelines. `LOG_LEVEL` defaults to `info`. See [Formatters](#formatters).
+
+Plain-text output for the Quick Start example above:
+
+```text
+18:42:05 ● Server started {"port":3000}
+18:42:05   Neutral message {"note":"no level icon"}
+18:42:05 ✖ Request failed {"path":"/api"}
+Error: timeout
+    at handler (/app/server.ts:12:9)
+```
+
+### Label Styles
+
+In plain-text mode, the per-level label is controlled by the `LOG_LABELS` environment variable or the `labels` constructor option (the option takes precedence):
+
+| `LOG_LABELS` | Labels | Example line |
+|--------------|--------|--------------|
+| `icon` (default) | `◆` `●` `▲` `✖` `‼` | `18:42:05 ● Server started` |
+| `text` | `DEBUG` `INFO` `WARN` `ERROR` `FATAL` | `18:42:05 INFO  Server started` |
+| `none` | _(timestamp only)_ | `18:42:05 Server started` |
+
+```typescript
+import { Logger } from 'jsonl-logger'
+
+const logger = new Logger({}, { labels: 'text' }) // overrides LOG_LABELS
+```
+
+The neutral `.log()` method always renders without an icon or label (timestamp + message only), so level-less lines stay visually distinct. In JSON mode these styles are ignored — labels apply to plain text only.
 
 ## Formatters
 
@@ -227,8 +262,9 @@ const info = errorInfo(caughtError)
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `LOG_FORMAT` | _(unset)_ | Set to enable JSON: `google-cloud-logging` or `victoria-logs` |
+| `LOG_FORMAT` | _(unset)_ | Set to enable JSON: `google-cloud-logging` or `victoria-logs`. Unset = colored plain text |
 | `LOG_LEVEL` | `info`/`debug` | Minimum log level (`info` when JSON, `debug` otherwise) |
+| `LOG_LABELS` | `icon` | Plain-text label style: `icon`, `text`, or `none` (also via the `labels` option) |
 
 ## Runtime Detection
 
