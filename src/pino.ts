@@ -28,6 +28,7 @@ function pinoError(error: ErrorInfo): Record<string, unknown> {
  * `node:os` import. Pino treats them as base bindings; supply them via the
  * logger context if you want them on every line:
  *
+ *   import os from 'node:os'
  *   new Logger({ pid: process.pid, hostname: os.hostname() }, ...)
  */
 export const Pino: Formatter = {
