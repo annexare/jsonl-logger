@@ -13,7 +13,6 @@ import type {
 import {
   defaultFormat,
   defaultLabelStyle,
-  flattenError,
   isJsonMode,
   logLevelValues,
   stripAnsi,
@@ -33,7 +32,7 @@ export type {
   LogRecord,
   TraceContext,
 } from './types'
-export { logLevelValues, stripAnsi } from './types'
+export { flattenError, logLevelValues, stripAnsi } from './types'
 
 const formatters: Record<FormatterName, Formatter> = {
   'google-cloud-logging': GoogleCloudLogging,
@@ -137,7 +136,6 @@ export class Logger {
 
     if (this.json) {
       const formatted = this.fmt.format(record)
-      if (record.error) flattenError(formatted, record.error)
       write(JSON.stringify(formatted), isErrorLevel[level])
     } else {
       this.logPlain(level, record, neutral)
