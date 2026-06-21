@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test'
 
-import { logLevelValues, stripAnsi, write } from '../src/types'
+import { detectColors, logLevelValues, stripAnsi, write } from '../src/types'
 
 describe('stripAnsi', () => {
   test('removes single ANSI color code', () => {
@@ -36,6 +36,48 @@ describe('logLevelValues', () => {
   test('contains all five levels', () => {
     const levels = Object.keys(logLevelValues)
     expect(levels).toEqual(['debug', 'info', 'warn', 'error', 'fatal'])
+  })
+})
+
+describe('detectColors', () => {
+  function withEnv(
+    vars: { FORCE_COLOR?: string; NO_COLOR?: string },
+    fn: () => void,
+  ): void {
+    const orig = {
+      FORCE_COLOR: process.env.FORCE_COLOR,
+      NO_COLOR: process.env.NO_COLOR,
+    }
+    const set = (key: 'FORCE_COLOR' | 'NO_COLOR', value?: string): void => {
+      if (value === undefined) delete process.env[key]
+      else process.env[key] = value
+    }
+    set('FORCE_COLOR', vars.FORCE_COLOR)
+    set('NO_COLOR', vars.NO_COLOR)
+    try {
+      fn()
+    } finally {
+      set('FORCE_COLOR', orig.FORCE_COLOR)
+      set('NO_COLOR', orig.NO_COLOR)
+    }
+  }
+
+  test('FORCE_COLOR=1 enables color', () => {
+    withEnv({ FORCE_COLOR: '1' }, () => expect(detectColors()).toBe(true))
+  })
+
+  test('FORCE_COLOR=0 disables color', () => {
+    withEnv({ FORCE_COLOR: '0' }, () => expect(detectColors()).toBe(false))
+  })
+
+  test('FORCE_COLOR takes precedence over NO_COLOR', () => {
+    withEnv({ FORCE_COLOR: '1', NO_COLOR: '1' }, () =>
+      expect(detectColors()).toBe(true),
+    )
+  })
+
+  test('NO_COLOR disables color when FORCE_COLOR is unset', () => {
+    withEnv({ NO_COLOR: '1' }, () => expect(detectColors()).toBe(false))
   })
 })
 

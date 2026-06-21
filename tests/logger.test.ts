@@ -144,14 +144,23 @@ describe('Logger plain mode', () => {
     console.error = consoleSpy.error
   })
 
-  test('info() outputs colored format', () => {
-    const logger = new Logger(undefined, { json: false })
+  test('info() outputs colored format when colors enabled', () => {
+    const logger = new Logger(undefined, { json: false, colors: true })
     logger.info('Dev message')
 
     expect(consoleSpy.log).toHaveBeenCalled()
     const out = consoleSpy.log.mock.calls[0]?.[0] as string
     expect(out).toContain('Dev message')
     expect(out).toContain('\x1b[')
+  })
+
+  test('colors:false omits ANSI codes', () => {
+    const logger = new Logger(undefined, { json: false, colors: false })
+    logger.info('Dev message')
+
+    const out = consoleSpy.log.mock.calls[0]?.[0] as string
+    expect(out).toContain('Dev message')
+    expect(out).not.toContain('\x1b[')
   })
 
   test('warn() uses console.warn', () => {
