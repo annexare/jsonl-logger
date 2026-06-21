@@ -1,3 +1,4 @@
+import { ElasticCommonSchema } from './elastic-common-schema'
 import { GoogleCloudLogging } from './google-cloud-logging'
 import { intercept } from './intercept'
 import type { Formatter, FormatterName } from './types'
@@ -6,6 +7,7 @@ import { VictoriaLogs } from './victoria-logs'
 
 if (defaultFormat) {
   const formatters: Record<FormatterName, Formatter> = {
+    ecs: ElasticCommonSchema,
     'google-cloud-logging': GoogleCloudLogging,
     'victoria-logs': VictoriaLogs,
   }

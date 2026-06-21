@@ -1,3 +1,4 @@
+import { ElasticCommonSchema } from './elastic-common-schema'
 import { GoogleCloudLogging } from './google-cloud-logging'
 import type {
   ErrorInfo,
@@ -36,6 +37,7 @@ export type {
 export { flattenError, logLevelValues, stripAnsi } from './types'
 
 const formatters: Record<FormatterName, Formatter> = {
+  ecs: ElasticCommonSchema,
   'google-cloud-logging': GoogleCloudLogging,
   'victoria-logs': VictoriaLogs,
 }

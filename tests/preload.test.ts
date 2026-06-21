@@ -53,6 +53,32 @@ describe('preload', () => {
     expect(parsed.level).toBe('info')
   })
 
+  test('uses ECS formatter when LOG_FORMAT=ecs', async () => {
+    const proc = Bun.spawn(
+      [
+        'bun',
+        '-e',
+        `
+        import './src/preload'
+        console.log('ecs test')
+        `,
+      ],
+      {
+        env: { ...process.env, LOG_FORMAT: 'ecs' },
+        stdout: 'pipe',
+        stderr: 'pipe',
+      },
+    )
+
+    const stdout = await new Response(proc.stdout).text()
+    await proc.exited
+
+    const parsed = JSON.parse(stdout.trim())
+    expect(parsed.message).toBe('ecs test')
+    expect(parsed['log.level']).toBe('info')
+    expect(parsed['ecs.version']).toBe('8.11.0')
+  })
+
   test('is a no-op when LOG_FORMAT is unset', async () => {
     const proc = Bun.spawn(
       [

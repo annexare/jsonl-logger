@@ -14,6 +14,7 @@ Lightweight ESM-only JSONL logger with pluggable formatters. Zero dependencies. 
 src/
   types.ts              — shared types, LogLevel, LogRecord, Formatter, write(), stripAnsi()
   index.ts              — Logger class, default singleton `logger`
+  elastic-common-schema.ts — Elastic Common Schema (ECS) formatter
   google-cloud-logging.ts — Google Cloud Logging formatter
   victoria-logs.ts      — VictoriaLogs formatter
   intercept.ts          — console.* monkey-patching for structured output
@@ -21,6 +22,7 @@ src/
 tests/
   logger.test.ts        — Logger class (JSON + plain modes, child loggers, filtering)
   intercept.test.ts     — console interception tests
+  elastic-common-schema.test.ts — ECS formatter tests
   google-cloud-logging.test.ts — GCL formatter tests
   victoria-logs.test.ts — VictoriaLogs formatter tests
   preload.test.ts       — preload module tests
@@ -35,10 +37,10 @@ tests/
 - **Preload is a no-op** without `LOG_FORMAT` — safe to include unconditionally.
 - **`write()`** bypasses `console.*` to avoid interception loops — writes directly to `process.stdout`/`process.stderr` (Node/Bun), `Deno.stdout`/`Deno.stderr`, or falls back to `console.log`/`console.error`.
 - **Intercept passthrough** — JSON strings that already contain the formatter's `messageKey` are written as-is, preventing double-formatting when `Logger` output goes through intercepted console.
-- **TitleCase exports** for formatters (`GoogleCloudLogging`, `VictoriaLogs`) — they are objects conforming to the `Formatter` type.
+- **TitleCase exports** for formatters (`GoogleCloudLogging`, `VictoriaLogs`, `ElasticCommonSchema`) — they are objects conforming to the `Formatter` type. `LOG_FORMAT=ecs` selects the ECS formatter (short alias; the module/subpath is `elastic-common-schema`).
 - **`.log()` method** — neutral/level-less output. Uses `info` level for filtering and JSON output, but renders with no icon or label in plain mode (whitespace padding only).
 - **Error cause chains** — `errorInfo()` recursively extracts `Error.cause` into `ErrorInfo.cause`. Both `Logger.error()`/`Logger.fatal()` and `intercept()` use it. In dev mode, causes are shown as `Caused by: ...` below the main stack. In JSON mode, they appear as `error.cause.name/message/stack` fields.
-- **Trace context injection** — optional `traceContext` getter on `LoggerOptions` / `InterceptOptions` returns `{ traceId, spanId, traceFlags? }`. Called per log call; formatters map to platform-specific fields (GCL: `logging.googleapis.com/*`, VictoriaLogs: `trace_id`/`span_id`). No new modules or dependencies — users wire their own OTel getter.
+- **Trace context injection** — optional `traceContext` getter on `LoggerOptions` / `InterceptOptions` returns `{ traceId, spanId, traceFlags? }`. Called per log call; formatters map to platform-specific fields (GCL: `logging.googleapis.com/*`, VictoriaLogs: `trace_id`/`span_id`, ECS: `trace.id`/`span.id`). No new modules or dependencies — users wire their own OTel getter.
 
 ## Conventions
 
