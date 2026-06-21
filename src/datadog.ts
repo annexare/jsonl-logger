@@ -27,7 +27,8 @@ function flattenDatadogError(
  * conversion). Datadog APM log-trace correlation expects Datadog-format IDs:
  * dd-trace-js already supplies these, so its IDs correlate as-is. 128-bit hex
  * IDs from an OpenTelemetry SDK may need matching formats on both sides — see
- * the README. Conversion can be added later without changing this contract.
+ * the README. If conversion is ever needed, it would ship as a separate
+ * `datadog-otel` formatter (its own `LOG_FORMAT` value), leaving this one as-is.
  */
 export const Datadog: Formatter = {
   messageKey: 'message',
@@ -39,8 +40,8 @@ export const Datadog: Formatter = {
       timestamp: record.timestamp,
     }
     if (record.trace) {
-      // Pass-through. Keep these two lines as the single place that would gain
-      // optional hex→decimal conversion if that's ever needed.
+      // Pass-through (see above). A future `datadog-otel` formatter would
+      // convert OTel hex → Datadog decimal here instead.
       entry['dd.trace_id'] = record.trace.traceId
       entry['dd.span_id'] = record.trace.spanId
     }
