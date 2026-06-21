@@ -85,4 +85,28 @@ describe('GoogleCloudLogging formatter', () => {
     expect(out['logging.googleapis.com/spanId']).toBeUndefined()
     expect(out['logging.googleapis.com/trace_sampled']).toBeUndefined()
   })
+
+  test('flattens record.error into error.* fields', () => {
+    const out = GoogleCloudLogging.format(
+      record({
+        error: {
+          name: 'TypeError',
+          message: 'boom',
+          stack: 'TypeError: boom\n    at x',
+          cause: { name: 'Error', message: 'root' },
+        },
+      }),
+    )
+    expect(out['error.name']).toBe('TypeError')
+    expect(out['error.message']).toBe('boom')
+    expect(out['error.stack']).toBe('TypeError: boom\n    at x')
+    expect(out['error.cause.name']).toBe('Error')
+    expect(out['error.cause.message']).toBe('root')
+  })
+
+  test('no error fields when record.error is undefined', () => {
+    const out = GoogleCloudLogging.format(record())
+    expect(out['error.name']).toBeUndefined()
+    expect(out['error.message']).toBeUndefined()
+  })
 })

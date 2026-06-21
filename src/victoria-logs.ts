@@ -1,4 +1,5 @@
 import type { Formatter, LogRecord } from './types'
+import { flattenError } from './types'
 
 export const VictoriaLogs: Formatter = {
   messageKey: '_msg',
@@ -16,6 +17,7 @@ export const VictoriaLogs: Formatter = {
         entry.trace_flags = record.trace.traceFlags
       }
     }
+    if (record.error) flattenError(entry, record.error)
     return entry
   },
 }

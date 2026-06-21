@@ -1,4 +1,5 @@
 import type { Formatter, LogLevel, LogRecord } from './types'
+import { flattenError } from './types'
 
 const severityMap: Record<LogLevel, string> = {
   debug: 'DEBUG',
@@ -25,6 +26,7 @@ export const GoogleCloudLogging: Formatter = {
           (record.trace.traceFlags & 1) === 1
       }
     }
+    if (record.error) flattenError(entry, record.error)
     return entry
   },
 }

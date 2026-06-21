@@ -6,7 +6,7 @@ import type {
   LogLevel,
   TraceContext,
 } from './types'
-import { flattenError, logLevelValues, stripAnsi, write } from './types'
+import { logLevelValues, stripAnsi, write } from './types'
 
 type ConsoleMethods = {
   log: typeof console.log
@@ -115,7 +115,6 @@ function createOverride(
     }
 
     const formatted = formatter.format(record)
-    if (record.error) flattenError(formatted, record.error)
     write(JSON.stringify(formatted), isErrorLevel[level])
   }
 }
