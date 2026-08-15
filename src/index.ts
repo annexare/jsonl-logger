@@ -7,12 +7,14 @@ import type {
   LoggerOptions,
   LogLevel,
   LogRecord,
+  TimeStyle,
   TraceContext,
 } from './types'
 import {
   defaultColors,
   defaultFormat,
   defaultLabelStyle,
+  defaultTimeStyle,
   isJsonMode,
   logLevelValues,
   stripAnsi,
@@ -29,6 +31,7 @@ export type {
   LoggerOptions,
   LogLevel,
   LogRecord,
+  TimeStyle,
   TraceContext,
 } from './types'
 export { flattenError, logLevelValues, stripAnsi } from './types'
@@ -81,12 +84,33 @@ const levelColors: Record<LogLevel, string> = {
 }
 const resetColor = '\x1b[0m'
 
+function pad2(value: number): string {
+  return String(value).padStart(2, '0')
+}
+
+/**
+ * Render the plain-text timestamp prefix.
+ * `iso` reuses the record's own UTC timestamp verbatim (matching JSON output);
+ * `time` and `datetime` render in local time.
+ */
+function formatTimestamp(timestamp: string, style: TimeStyle): string {
+  if (style === 'iso') return timestamp
+
+  const date = new Date(timestamp)
+  const time = date.toLocaleTimeString('en-US', { hour12: false })
+  if (style === 'time') return time
+
+  const day = `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}`
+  return `${day} ${time}`
+}
+
 export class Logger {
   private ctx: LogContext
   private min: number
   private json: boolean
   private fmt: Formatter
   private labels: LabelStyle
+  private time: TimeStyle
   private colorize: boolean
   private tc?: () => TraceContext | undefined
 
@@ -95,6 +119,7 @@ export class Logger {
     this.json = options?.json ?? defaultJson
     this.fmt = options?.formatter ?? defaultFormatter
     this.labels = options?.labels ?? defaultLabelStyle
+    this.time = options?.time ?? defaultTimeStyle
     this.colorize = options?.colors ?? defaultColors
     this.tc = options?.traceContext
     const level: LogLevel = options?.level ?? defaultLevel
@@ -108,6 +133,7 @@ export class Logger {
         json: this.json,
         formatter: this.fmt,
         labels: this.labels,
+        time: this.time,
         colors: this.colorize,
         traceContext: this.tc,
       },
@@ -156,9 +182,7 @@ export class Logger {
     const color = this.colorize ? levelColors[level] : ''
     const reset = this.colorize ? resetColor : ''
 
-    const time = new Date(record.timestamp).toLocaleTimeString('en-US', {
-      hour12: false,
-    })
+    const time = formatTimestamp(record.timestamp, this.time)
 
     let label: string
     if (this.labels === 'none') {

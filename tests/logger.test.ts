@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, mock, test } from 'bun:test'
 
 import { errorInfo, Logger } from '../src/index'
+import type { TimeStyle } from '../src/types'
 import { stripAnsi } from '../src/types'
 import { VictoriaLogs } from '../src/victoria-logs'
 
@@ -831,5 +832,107 @@ describe('child logger labels', () => {
 
     const out = stripAnsi(consoleSpy.warn.mock.calls[0]?.[0] as string)
     expect(out).toContain('▲ ')
+  })
+})
+
+describe('timestamp styles', () => {
+  let consoleSpy: Record<string, ReturnType<typeof mock>>
+
+  beforeEach(() => {
+    consoleSpy = {
+      log: mock(() => {}),
+      debug: mock(() => {}),
+      warn: mock(() => {}),
+      error: mock(() => {}),
+    }
+    console.log = consoleSpy.log
+    console.debug = consoleSpy.debug
+    console.warn = consoleSpy.warn
+    console.error = consoleSpy.error
+  })
+
+  function line(time: TimeStyle): string {
+    const logger = new Logger(undefined, { json: false, colors: false, time })
+    logger.info('MSG')
+    return stripAnsi(consoleSpy.log.mock.calls[0]?.[0] as string)
+  }
+
+  test("'time' renders time only", () => {
+    expect(line('time')).toMatch(/^\d{2}:\d{2}:\d{2} ● MSG$/)
+  })
+
+  test("'datetime' prefixes the local date", () => {
+    expect(line('datetime')).toMatch(
+      /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} ● MSG$/,
+    )
+  })
+
+  test("'iso' renders the record's UTC timestamp verbatim", () => {
+    expect(line('iso')).toMatch(
+      /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z ● MSG$/,
+    )
+  })
+
+  test("'datetime' date matches the record's local date", () => {
+    const localDate = (date: Date): string =>
+      `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+
+    // Straddle the emission so a local midnight rollover can't flake the test
+    const before = new Date()
+    const out = line('datetime')
+    const after = new Date()
+
+    expect([localDate(before), localDate(after)]).toContain(out.slice(0, 10))
+  })
+
+  test('style applies to every level, not just info', () => {
+    const logger = new Logger(undefined, {
+      json: false,
+      colors: false,
+      time: 'datetime',
+    })
+    logger.warn('W')
+    logger.error('E')
+
+    expect(stripAnsi(consoleSpy.warn.mock.calls[0]?.[0] as string)).toMatch(
+      /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} ▲ W$/,
+    )
+    expect(stripAnsi(consoleSpy.error.mock.calls[0]?.[0] as string)).toMatch(
+      /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} ✖ E$/,
+    )
+  })
+
+  test('neutral .log() keeps label padding under datetime', () => {
+    const logger = new Logger(undefined, {
+      json: false,
+      colors: false,
+      time: 'datetime',
+    })
+    logger.log('Neutral')
+
+    expect(stripAnsi(consoleSpy.log.mock.calls[0]?.[0] as string)).toMatch(
+      /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\s{3}Neutral$/,
+    )
+  })
+
+  test('child inherits the time style', () => {
+    const logger = new Logger(undefined, {
+      json: false,
+      colors: false,
+      time: 'iso',
+    })
+    logger.child({ service: 'api' }).info('From child')
+
+    expect(stripAnsi(consoleSpy.log.mock.calls[0]?.[0] as string)).toMatch(
+      /^\d{4}-\d{2}-\d{2}T[\d:.]+Z ● From child \{"service":"api"\}$/,
+    )
+  })
+
+  test('JSON mode ignores the time style', () => {
+    const logger = new Logger(undefined, { json: true, time: 'time' })
+    logger.info('Structured')
+
+    const parsed = JSON.parse(output.stdout[0] as string)
+    expect(parsed.timestamp).toMatch(/^\d{4}-\d{2}-\d{2}T[\d:.]+Z$/)
   })
 })
