@@ -38,12 +38,31 @@ export const defaultLabelStyle: LabelStyle =
       ? 'none'
       : 'icon'
 
+export type TimeStyle = 'datetime' | 'iso' | 'time'
+
+/**
+ * Resolve the plain-text timestamp style.
+ * Precedence: LOG_TIME > stdout TTY detection.
+ * Interactive terminals get time only — the date is invariant across a session
+ * and the line stays narrow. Piped or redirected output gets the full date,
+ * since captured lines are read back long after they were written.
+ * Unrecognized `LOG_TIME` values fall through to TTY detection.
+ */
+export function detectTimeStyle(): TimeStyle {
+  const style = process.env.LOG_TIME as TimeStyle | undefined
+  if (style === 'time' || style === 'datetime' || style === 'iso') return style
+  return process.stdout?.isTTY ? 'time' : 'datetime'
+}
+
+export const defaultTimeStyle: TimeStyle = detectTimeStyle()
+
 export type LoggerOptions = {
   colors?: boolean
   formatter?: Formatter
   json?: boolean
   labels?: LabelStyle
   level?: LogLevel
+  time?: TimeStyle
   traceContext?: () => TraceContext | undefined
 }
 

@@ -1,6 +1,12 @@
 import { describe, expect, test } from 'bun:test'
 
-import { detectColors, logLevelValues, stripAnsi, write } from '../src/types'
+import {
+  detectColors,
+  detectTimeStyle,
+  logLevelValues,
+  stripAnsi,
+  write,
+} from '../src/types'
 
 describe('stripAnsi', () => {
   test('removes single ANSI color code', () => {
@@ -78,6 +84,72 @@ describe('detectColors', () => {
 
   test('NO_COLOR disables color when FORCE_COLOR is unset', () => {
     withEnv({ NO_COLOR: '1' }, () => expect(detectColors()).toBe(false))
+  })
+})
+
+describe('detectTimeStyle', () => {
+  function withEnv(value: string | undefined, fn: () => void): void {
+    const orig = process.env.LOG_TIME
+    if (value === undefined) delete process.env.LOG_TIME
+    else process.env.LOG_TIME = value
+    try {
+      fn()
+    } finally {
+      if (orig === undefined) delete process.env.LOG_TIME
+      else process.env.LOG_TIME = orig
+    }
+  }
+
+  function withTTY(isTTY: boolean, fn: () => void): void {
+    const orig = process.stdout.isTTY
+    process.stdout.isTTY = isTTY
+    try {
+      fn()
+    } finally {
+      process.stdout.isTTY = orig
+    }
+  }
+
+  test('LOG_TIME=time is honored', () => {
+    withEnv('time', () => expect(detectTimeStyle()).toBe('time'))
+  })
+
+  test('LOG_TIME=datetime is honored', () => {
+    withEnv('datetime', () => expect(detectTimeStyle()).toBe('datetime'))
+  })
+
+  test('LOG_TIME=iso is honored', () => {
+    withEnv('iso', () => expect(detectTimeStyle()).toBe('iso'))
+  })
+
+  test('LOG_TIME wins over TTY detection', () => {
+    withEnv('datetime', () =>
+      withTTY(true, () => expect(detectTimeStyle()).toBe('datetime')),
+    )
+    withEnv('time', () =>
+      withTTY(false, () => expect(detectTimeStyle()).toBe('time')),
+    )
+  })
+
+  test('defaults to time on a TTY', () => {
+    withEnv(undefined, () =>
+      withTTY(true, () => expect(detectTimeStyle()).toBe('time')),
+    )
+  })
+
+  test('defaults to datetime when output is piped', () => {
+    withEnv(undefined, () =>
+      withTTY(false, () => expect(detectTimeStyle()).toBe('datetime')),
+    )
+  })
+
+  test('unrecognized LOG_TIME falls through to TTY detection', () => {
+    withEnv('nonsense', () =>
+      withTTY(true, () => expect(detectTimeStyle()).toBe('time')),
+    )
+    withEnv('nonsense', () =>
+      withTTY(false, () => expect(detectTimeStyle()).toBe('datetime')),
+    )
   })
 })
 

@@ -33,7 +33,7 @@ logger.error('Request failed', { path: '/api' }, new Error('timeout'))
 
 The active mode is selected by the `LOG_FORMAT` environment variable — no code changes required:
 
-- **Plain text** (default, `LOG_FORMAT` unset) — human-readable lines with a timestamp, level label, and inline context; colored when writing to a TTY. Ideal for local development. `LOG_LEVEL` defaults to `debug`.
+- **Plain text** (default, `LOG_FORMAT` unset) — human-readable lines with a timestamp, level label, and inline context; colored when writing to a TTY, and dated when it is not. Ideal for local development. `LOG_LEVEL` defaults to `debug`.
 - **Structured JSON** (`LOG_FORMAT` set) — one JSON object per line (JSONL) shaped by the selected formatter. Ideal for production log pipelines. `LOG_LEVEL` defaults to `info`. See [Formatters](#formatters).
 
 Plain-text output for the Quick Start example above:
@@ -59,6 +59,31 @@ import { Logger } from 'jsonl-logger'
 
 const logger = new Logger({}, { colors: false }) // never colorize, regardless of TTY
 ```
+
+### Timestamp
+
+The plain-text timestamp is **auto-detected** the same way color is. An interactive TTY gets the time only — the date is invariant across a session, and the line stays narrow. Piped or redirected output gets the full date, because captured lines are read back long after they were written:
+
+```text
+18:42:05 ● Server started                    # interactive terminal
+2026-08-15 18:42:05 ● Server started         # piped to a file, or in CI
+```
+
+Override via the `LOG_TIME` environment variable or the `time` constructor option (the option takes precedence). Both accept:
+
+| `LOG_TIME` | Prefix | Example line |
+|------------|--------|--------------|
+| `time` | Local time | `18:42:05 ● Server started` |
+| `datetime` | Local date and time | `2026-08-15 18:42:05 ● Server started` |
+| `iso` | The record's UTC ISO 8601 timestamp | `2026-08-15T15:42:05.123Z ● Server started` |
+
+```typescript
+import { Logger } from 'jsonl-logger'
+
+const logger = new Logger({}, { time: 'datetime' }) // always dated, TTY or not
+```
+
+`iso` reuses the exact `timestamp` string the JSON formatters emit, so plain-text lines stay directly comparable with structured output. In JSON mode the style is ignored — every formatter already emits a full timestamp. Child loggers inherit the style from their parent.
 
 ### Label Styles
 
@@ -324,6 +349,7 @@ const info = errorInfo(caughtError)
 | `LOG_FORMAT` | _(unset)_ | Set to enable JSON — selects the formatter (see [Formatters](#formatters)). Unset = plain text (colored on a TTY) |
 | `LOG_LEVEL` | `info`/`debug` | Minimum log level (`info` when JSON, `debug` otherwise) |
 | `LOG_LABELS` | `icon` | Plain-text label style: `icon`, `text`, or `none` (also via the `labels` option) |
+| `LOG_TIME` | _(auto)_ | Plain-text timestamp: `time`, `datetime`, or `iso` (also via the `time` option). Unset = `time` on a TTY, `datetime` otherwise |
 | `NO_COLOR` | _(unset)_ | Set to any value to disable plain-text color ([no-color.org](https://no-color.org)) |
 | `FORCE_COLOR` | _(unset)_ | Force plain-text color on (`0`/`false` disables); overrides `NO_COLOR` |
 
@@ -353,7 +379,7 @@ The logger auto-detects the runtime and uses the fastest available I/O:
 
 - The package's **public exports** — the `Logger` class, `logger` singleton, formatter objects, `intercept()` / `originalConsole`, and the exported helpers (`errorInfo`, `flattenError`, `logLevelValues`, `stripAnsi`) and types (see [Exports](#exports)).
 - The **`Formatter`** contract (`{ messageKey, format(record) }`) and the `LogRecord` / `ErrorInfo` shapes.
-- The **`LOG_FORMAT`** values, **`LOG_LEVEL`**, **`LOG_LABELS`**, **`NO_COLOR`** / **`FORCE_COLOR`**, and the `Logger` / `intercept` options.
+- The **`LOG_FORMAT`** values, **`LOG_LEVEL`**, **`LOG_LABELS`**, **`LOG_TIME`**, **`NO_COLOR`** / **`FORCE_COLOR`**, and the `Logger` / `intercept` options.
 
 Removing, renaming, or changing the behavior of any of the above bumps the major version. **Additive** changes — a new `LOG_FORMAT` value, a new optional option — are non-breaking and ship in minor releases.
 
