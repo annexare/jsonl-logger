@@ -1,7 +1,6 @@
 [![Monthly Downloads](https://img.shields.io/npm/dm/jsonl-logger.svg)](https://www.npmjs.com/package/jsonl-logger)
-[![NPM](https://img.shields.io/npm/v/jsonl-logger.svg 'NPM package version')](https://www.npmjs.com/package/jsonl-logger)
+[![NPM](https://img.shields.io/npm/v/jsonl-logger.svg "NPM package version")](https://www.npmjs.com/package/jsonl-logger)
 [![CI](https://github.com/annexare/jsonl-logger/actions/workflows/ci.yml/badge.svg)](https://github.com/annexare/jsonl-logger/actions/workflows/ci.yml)
-
 
 # JSONL Logger
 
@@ -71,11 +70,11 @@ The plain-text timestamp is **auto-detected** the same way color is. An interact
 
 Override via the `LOG_TIME` environment variable or the `time` constructor option (the option takes precedence). Both accept:
 
-| `LOG_TIME` | Prefix | Example line |
-|------------|--------|--------------|
-| `time` | Local time | `18:42:05 ● Server started` |
-| `datetime` | Local date and time | `2026-08-15 18:42:05 ● Server started` |
-| `iso` | The record's UTC ISO 8601 timestamp | `2026-08-15T15:42:05.123Z ● Server started` |
+| `LOG_TIME` | Prefix                              | Example line                                |
+| ---------- | ----------------------------------- | ------------------------------------------- |
+| `time`     | Local time                          | `18:42:05 ● Server started`                 |
+| `datetime` | Local date and time                 | `2026-08-15 18:42:05 ● Server started`      |
+| `iso`      | The record's UTC ISO 8601 timestamp | `2026-08-15T15:42:05.123Z ● Server started` |
 
 ```typescript
 import { Logger } from 'jsonl-logger'
@@ -89,11 +88,11 @@ const logger = new Logger({}, { time: 'datetime' }) // always dated, TTY or not
 
 In plain-text mode, the per-level label is controlled by the `LOG_LABELS` environment variable or the `labels` constructor option (the option takes precedence):
 
-| `LOG_LABELS` | Labels | Example line |
-|--------------|--------|--------------|
-| `icon` (default) | `◆` `●` `▲` `✖` `‼` | `18:42:05 ● Server started` |
-| `text` | `DEBUG` `INFO` `WARN` `ERROR` `FATAL` | `18:42:05 INFO  Server started` |
-| `none` | _(timestamp only)_ | `18:42:05 Server started` |
+| `LOG_LABELS`     | Labels                                | Example line                    |
+| ---------------- | ------------------------------------- | ------------------------------- |
+| `icon` (default) | `◆` `●` `▲` `✖` `‼`                   | `18:42:05 ● Server started`     |
+| `text`           | `DEBUG` `INFO` `WARN` `ERROR` `FATAL` | `18:42:05 INFO  Server started` |
+| `none`           | _(timestamp only)_                    | `18:42:05 Server started`       |
 
 ```typescript
 import { Logger } from 'jsonl-logger'
@@ -213,14 +212,17 @@ The logger supports automatic trace context injection. Supply a `traceContext` g
 import { trace } from '@opentelemetry/api'
 import { Logger } from 'jsonl-logger'
 
-const logger = new Logger({}, {
-  traceContext: () => {
-    const span = trace.getActiveSpan()
-    if (!span) return undefined
-    const { traceId, spanId, traceFlags } = span.spanContext()
-    return { traceId, spanId, traceFlags }
+const logger = new Logger(
+  {},
+  {
+    traceContext: () => {
+      const span = trace.getActiveSpan()
+      if (!span) return undefined
+      const { traceId, spanId, traceFlags } = span.spanContext()
+      return { traceId, spanId, traceFlags }
+    },
   },
-})
+)
 
 logger.info('request handled', { path: '/api' })
 // GCL output includes "logging.googleapis.com/trace", "logging.googleapis.com/spanId", etc.
@@ -230,12 +232,15 @@ logger.info('request handled', { path: '/api' })
 ### Custom trace context
 
 ```typescript
-const logger = new Logger({}, {
-  traceContext: () => ({
-    traceId: myTracer.currentTraceId(),
-    spanId: myTracer.currentSpanId(),
-  }),
-})
+const logger = new Logger(
+  {},
+  {
+    traceContext: () => ({
+      traceId: myTracer.currentTraceId(),
+      spanId: myTracer.currentSpanId(),
+    }),
+  },
+)
 ```
 
 The `traceContext` option is also available on `intercept()`:
@@ -310,6 +315,7 @@ logger.error('API call failed', { endpoint: '/users' }, outer)
 ```
 
 **Dev mode** (no `LOG_FORMAT`) — colored plain text with full stack:
+
 ```
 18:42:05 ✖ API call failed {"endpoint":"/users"}
 Error: fetch failed
@@ -319,6 +325,7 @@ Caused by: Error: ECONNREFUSED
 ```
 
 **Production** (`LOG_FORMAT` set) — structured JSON with `error.*` and `error.cause.*` fields:
+
 ```json
 {
   "message": "API call failed",
@@ -344,34 +351,35 @@ const info = errorInfo(caughtError)
 
 ## Environment Variables
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `LOG_FORMAT` | _(unset)_ | Set to enable JSON — selects the formatter (see [Formatters](#formatters)). Unset = plain text (colored on a TTY) |
-| `LOG_LEVEL` | `info`/`debug` | Minimum log level (`info` when JSON, `debug` otherwise) |
-| `LOG_LABELS` | `icon` | Plain-text label style: `icon`, `text`, or `none` (also via the `labels` option) |
-| `LOG_TIME` | _(auto)_ | Plain-text timestamp: `time`, `datetime`, or `iso` (also via the `time` option). Unset = `time` on a TTY, `datetime` otherwise |
-| `NO_COLOR` | _(unset)_ | Set to any value to disable plain-text color ([no-color.org](https://no-color.org)) |
-| `FORCE_COLOR` | _(unset)_ | Force plain-text color on (`0`/`false` disables); overrides `NO_COLOR` |
+| Variable      | Default        | Description                                                                                                                    |
+| ------------- | -------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| `LOG_FORMAT`  | _(unset)_      | Set to enable JSON — selects the formatter (see [Formatters](#formatters)). Unset = plain text (colored on a TTY)              |
+| `LOG_LEVEL`   | `info`/`debug` | Minimum log level (`info` when JSON, `debug` otherwise)                                                                        |
+| `LOG_LABELS`  | `icon`         | Plain-text label style: `icon`, `text`, or `none` (also via the `labels` option)                                               |
+| `LOG_TIME`    | _(auto)_       | Plain-text timestamp: `time`, `datetime`, or `iso` (also via the `time` option). Unset = `time` on a TTY, `datetime` otherwise |
+| `NO_COLOR`    | _(unset)_      | Set to any value to disable plain-text color ([no-color.org](https://no-color.org))                                            |
+| `FORCE_COLOR` | _(unset)_      | Force plain-text color on (`0`/`false` disables); overrides `NO_COLOR`                                                         |
 
 ## Runtime Detection
 
 The logger auto-detects the runtime and uses the fastest available I/O:
+
 - **Bun** / **Node.js** — `process.stdout.write` / `process.stderr.write` (bypasses console overhead)
 - **Deno** — `Deno.stdout.writeSync` / `Deno.stderr.writeSync`
 - **Browser / unknown** — falls back to `console.log` / `console.error`
 
 ## Exports
 
-| Subpath | Export |
-|---------|--------|
-| `jsonl-logger` | `Logger`, `logger`, `errorInfo()`, `flattenError()`, `logLevelValues`, `stripAnsi()`, types (`ErrorInfo`, `LogRecord`, `TraceContext`, etc.) |
-| `jsonl-logger/datadog` | `Datadog` formatter |
-| `jsonl-logger/elastic-common-schema` | `ElasticCommonSchema` formatter |
-| `jsonl-logger/google-cloud-logging` | `GoogleCloudLogging` formatter |
-| `jsonl-logger/pino` | `Pino` formatter |
-| `jsonl-logger/victoria-logs` | `VictoriaLogs` formatter |
-| `jsonl-logger/intercept` | `intercept()`, `originalConsole` |
-| `jsonl-logger/preload` | Side-effect auto-intercept |
+| Subpath                              | Export                                                                                                                                       |
+| ------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `jsonl-logger`                       | `Logger`, `logger`, `errorInfo()`, `flattenError()`, `logLevelValues`, `stripAnsi()`, types (`ErrorInfo`, `LogRecord`, `TraceContext`, etc.) |
+| `jsonl-logger/datadog`               | `Datadog` formatter                                                                                                                          |
+| `jsonl-logger/elastic-common-schema` | `ElasticCommonSchema` formatter                                                                                                              |
+| `jsonl-logger/google-cloud-logging`  | `GoogleCloudLogging` formatter                                                                                                               |
+| `jsonl-logger/pino`                  | `Pino` formatter                                                                                                                             |
+| `jsonl-logger/victoria-logs`         | `VictoriaLogs` formatter                                                                                                                     |
+| `jsonl-logger/intercept`             | `intercept()`, `originalConsole`                                                                                                             |
+| `jsonl-logger/preload`               | Side-effect auto-intercept                                                                                                                   |
 
 ## Stability
 
