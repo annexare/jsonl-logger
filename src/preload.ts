@@ -1,6 +1,6 @@
-import { resolveFormatter } from './formatters'
-import { intercept } from './intercept'
-import { defaultFormat } from './types'
+import { resolveFormatter } from './formatters.js'
+import { intercept } from './intercept.js'
+import { defaultFormat } from './types.js'
 
 if (defaultFormat) {
   const formatter = resolveFormatter(defaultFormat)

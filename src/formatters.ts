@@ -1,9 +1,9 @@
-import { Datadog } from './datadog'
-import { ElasticCommonSchema } from './elastic-common-schema'
-import { GoogleCloudLogging } from './google-cloud-logging'
-import { Pino } from './pino'
-import type { Formatter, FormatterName } from './types'
-import { VictoriaLogs } from './victoria-logs'
+import { Datadog } from './datadog.js'
+import { ElasticCommonSchema } from './elastic-common-schema.js'
+import { GoogleCloudLogging } from './google-cloud-logging.js'
+import { Pino } from './pino.js'
+import type { Formatter, FormatterName } from './types.js'
+import { VictoriaLogs } from './victoria-logs.js'
 
 /** Registry of built-in JSON formatters, keyed by `LOG_FORMAT` value. */
 export const formatters: Record<FormatterName, Formatter> = {

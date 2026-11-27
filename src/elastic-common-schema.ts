@@ -1,4 +1,4 @@
-import type { ErrorInfo, Formatter, LogRecord } from './types'
+import type { ErrorInfo, Formatter, LogRecord } from './types.js'
 
 // Pinned to the last stable ECS release before it merged into OTel SemConv.
 const ECS_VERSION = '8.11.0'

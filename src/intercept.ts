@@ -1,12 +1,12 @@
-import { GoogleCloudLogging } from './google-cloud-logging'
-import { errorInfo } from './index'
+import { GoogleCloudLogging } from './google-cloud-logging.js'
+import { errorInfo } from './index.js'
 import type {
   Formatter,
   InterceptOptions,
   LogLevel,
   TraceContext,
-} from './types'
-import { logLevelValues, stripAnsi, write } from './types'
+} from './types.js'
+import { logLevelValues, stripAnsi, write } from './types.js'
 
 type ConsoleMethods = {
   log: typeof console.log

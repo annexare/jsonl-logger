@@ -1,5 +1,5 @@
-import type { Formatter, LogLevel, LogRecord } from './types'
-import { flattenError } from './types'
+import type { Formatter, LogLevel, LogRecord } from './types.js'
+import { flattenError } from './types.js'
 
 const severityMap: Record<LogLevel, string> = {
   debug: 'DEBUG',
