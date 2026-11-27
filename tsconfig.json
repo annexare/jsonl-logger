@@ -3,6 +3,7 @@
     "target": "ESNext",
     "module": "nodenext",
     "moduleResolution": "nodenext",
+    "allowImportingTsExtensions": true,
     "types": ["bun"],
     "declaration": true,
     "declarationDir": "dist",

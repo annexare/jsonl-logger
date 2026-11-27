@@ -1,5 +1,5 @@
-import type { Formatter, LogRecord } from './types.js'
-import { flattenError } from './types.js'
+import type { Formatter, LogRecord } from './types.ts'
+import { flattenError } from './types.ts'
 
 export const VictoriaLogs: Formatter = {
   messageKey: '_msg',

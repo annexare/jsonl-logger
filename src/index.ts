@@ -1,4 +1,4 @@
-import { resolveFormatter } from './formatters.js'
+import { resolveFormatter } from './formatters.ts'
 import type {
   ErrorInfo,
   Formatter,
@@ -9,7 +9,7 @@ import type {
   LogRecord,
   TimeStyle,
   TraceContext,
-} from './types.js'
+} from './types.ts'
 import {
   defaultColors,
   defaultFormat,
@@ -19,7 +19,7 @@ import {
   logLevelValues,
   stripAnsi,
   write,
-} from './types.js'
+} from './types.ts'
 
 export type {
   ErrorInfo,
@@ -33,8 +33,8 @@ export type {
   LogRecord,
   TimeStyle,
   TraceContext,
-} from './types.js'
-export { flattenError, logLevelValues, stripAnsi } from './types.js'
+} from './types.ts'
+export { flattenError, logLevelValues, stripAnsi } from './types.ts'
 
 const defaultFormatter = resolveFormatter(defaultFormat)
 

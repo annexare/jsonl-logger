@@ -55,6 +55,7 @@ tests/
 ## Conventions
 
 - ESM-only (`"type": "module"`)
+- Relative imports in `src/` name the real file with its `.ts` extension (`allowImportingTsExtensions`). tsc copies specifiers verbatim into `dist/*.d.ts`, and consumers on `moduleResolution: node16`/`nodenext` cannot resolve extensionless ones (#63); `build:types` runs under `nodenext`, so an extensionless import fails the build.
 - Biome for linting and formatting
 - Bun test runner with `bun:test`
 - TypeScript strict mode

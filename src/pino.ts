@@ -1,4 +1,4 @@
-import type { ErrorInfo, Formatter, LogLevel, LogRecord } from './types.js'
+import type { ErrorInfo, Formatter, LogLevel, LogRecord } from './types.ts'
 
 // Pino's numeric levels (trace=10 has no equivalent here).
 const levelMap: Record<LogLevel, number> = {
