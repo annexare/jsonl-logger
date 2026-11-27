@@ -59,7 +59,7 @@
   "scripts": {
     "build": "bun run build:js && bun run build:types",
     "build:js": "bun build src/index.ts src/datadog.ts src/elastic-common-schema.ts src/google-cloud-logging.ts src/pino.ts src/victoria-logs.ts src/intercept.ts src/preload.ts --outdir dist --target node --format esm --minify",
-    "build:types": "tsc --emitDeclarationOnly",
+    "build:types": "tsc --emitDeclarationOnly && bun scripts/dts-extensions.ts",
     "lint": "biome check --write .",
     "test": "bun test"
   },

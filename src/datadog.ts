@@ -1,4 +1,4 @@
-import type { ErrorInfo, Formatter, LogLevel, LogRecord } from './types.ts'
+import type { ErrorInfo, Formatter, LogLevel, LogRecord } from './types'
 
 // Datadog log status (severity) names.
 const statusMap: Record<LogLevel, string> = {
