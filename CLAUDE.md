@@ -33,6 +33,8 @@ tests/
   preload.test.ts       — preload module tests
   formatters.test.ts    — resolveFormatter registry tests
   types.test.ts         — stripAnsi, logLevelValues, write() tests
+scripts/
+  dts-extensions.ts     — build:types post-step: adds .js to relative specifiers in dist/*.d.ts
 ```
 
 ## Key Design Decisions
@@ -55,6 +57,7 @@ tests/
 ## Conventions
 
 - ESM-only (`"type": "module"`)
+- Relative imports in `src/` stay extensionless. tsc copies specifiers verbatim into `dist/*.d.ts`, and consumers on `moduleResolution: node16`/`nodenext` cannot resolve extensionless ones (#63), so `build:types` runs `scripts/dts-extensions.ts` after tsc to add `.js` to every relative specifier in the emitted declarations. Bun's bundler cannot emit or bundle declarations.
 - Biome for linting and formatting
 - Bun test runner with `bun:test`
 - TypeScript strict mode

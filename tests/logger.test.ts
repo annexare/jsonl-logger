@@ -7,22 +7,27 @@ import { VictoriaLogs } from '../src/victoria-logs'
 
 let output: { stdout: string[]; stderr: string[] }
 
+const origStdoutWrite = process.stdout.write
+const origStderrWrite = process.stderr.write
+
+// Capture at the stream level: a mock.module of '../src/types' outlives
+// mock.restore() and leaks into every test file that runs after this one.
+function capture(lines: string[]): typeof process.stdout.write {
+  return ((chunk: string) => {
+    lines.push(chunk.endsWith('\n') ? chunk.slice(0, -1) : chunk)
+    return true
+  }) as typeof process.stdout.write
+}
+
 beforeEach(() => {
   output = { stdout: [], stderr: [] }
-  // Mock process.stdout/stderr.write to capture output
-  mock.module('../src/types', () => {
-    const actual = require('../src/types')
-    return {
-      ...actual,
-      write: (data: string, isError: boolean) => {
-        if (isError) output.stderr.push(data)
-        else output.stdout.push(data)
-      },
-    }
-  })
+  process.stdout.write = capture(output.stdout)
+  process.stderr.write = capture(output.stderr)
 })
 
 afterEach(() => {
+  process.stdout.write = origStdoutWrite
+  process.stderr.write = origStderrWrite
   mock.restore()
 })
 
